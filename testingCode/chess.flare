@@ -1,12 +1,17 @@
-const size:numb = 10;
-var it:numb = 0;
-while (it < size + 2)
-{
-	it = it + 1;
-	write!("_")
+fnc printunderscores(count:numb):void{
+	var it:numb = 0;
+	while (it < count + 2)
+	{
+		it = it + 1;
+		write!("_")
+	}
+	writeLn!("") 
 }
-it = 0;
-writeLn!("")
+
+const size:numb = 10;
+printunderscores(size)
+var it:numb = 0;
+
 while (it < size)
 {
 	write!("|")
@@ -17,19 +22,15 @@ while (it < size)
 		var rem:numb = 0;
 		var rem2:numb = 0;
 		var tile:string = "X";
-		it2 = it2 + 1;		
+		it2 = it2 + 1;
 		rem = it % 2;
 		rem2 = (it2 + rem) % 2;
-		if (rem2 > 0) {
+		if (rem2 > 0)
+		{
 			tile = " ";
 		}
 		write!(tile)
 	}
 	writeLn!("|")
 }
-it = 0;
-while (it < size + 2)
-{
-	it = it + 1;
-	write!("_")
-}
+printunderscores(size)
