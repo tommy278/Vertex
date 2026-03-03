@@ -344,6 +344,8 @@ impl Compilable for VariableAssignNode {
                 found: value_type,
             });
         }
+        // SAFETY: At this moment we surely know that the variable will exist and we dont need to
+        // do normal 'unwrap'
         unsafe{
 
           let tag = compiler.context.get_variable(&self.name).unwrap_unchecked().tag.clone();

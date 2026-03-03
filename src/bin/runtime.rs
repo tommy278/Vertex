@@ -1,5 +1,9 @@
 use flare::runtime::virtual_machine::virtual_machine::VM;
-
+/* 
+ * Old compilation testing
+ * NOT PRODUCTION READY
+ * 
+ * */
 static PROGRAM: &[u8] = include_bytes!("../../out/program.bin");
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
