@@ -1,7 +1,9 @@
 # Installing flare
-1. Install rust from [Rust](https://rust-lang.org)
-2. On windows(if using PowerShell) run [installation script](install.ps1) or at Mac and linux run
-3. Or you can use the install.py skript but you need to have python installed
+1. Using install skripts:
+  - Install rust from [Rust](https://rust-lang.org)
+  - On windows(if using PowerShell) run [installation script](install.ps1) or at Mac and linux run
+  - Or you can use the install.py skript but you need to have python installed
+2. Using github releases with prebuild binaries
 
 
 # Building flare

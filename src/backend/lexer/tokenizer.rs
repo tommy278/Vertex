@@ -6,9 +6,9 @@ use crate::{
     backend::lexer::tokens::{
         Token, TokenKind,
         TokenKind::{
-            CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, EQUAL, FLOAT, FNC, IDENTIFIER, IF,
+            AS, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, EQUAL, FLOAT, FNC, IDENTIFIER, IF,
             LEFTPAREN, LOOP, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN, STR, TIMES, VAR,
-            WHILE,AS
+            WHILE,
         },
     },
 };
@@ -212,14 +212,19 @@ impl Tokenizer {
                 token_kind: WHILE,
                 token_value: text_buffer,
             },
-            "as"=>Token{
-                token_kind:AS,
-                token_value:text_buffer
+            "as" => Token {
+                token_kind: AS,
+                token_value: text_buffer,
             },
             "undef" => Token {
                 token_kind: TokenKind::UNDEF,
                 token_value: text_buffer,
             },
+            "use" => Token {
+                token_kind: TokenKind::USE,
+                token_value: text_buffer,
+            },
+
             _ => Token {
                 token_kind: IDENTIFIER,
                 token_value: text_buffer,
@@ -227,31 +232,23 @@ impl Tokenizer {
         }
     }
 
-
-
-fn read_string(&mut self) -> Result<Token, LexerError> {
-    self.advance();
-
-    let mut value = String::new();
-    while self.current_token != '"' && self.current_token != '\0' {
-        value.push(self.current_token);
+    fn read_string(&mut self) -> Result<Token, LexerError> {
         self.advance();
+
+        let mut value = String::new();
+        while self.current_token != '"' && self.current_token != '\0' {
+            value.push(self.current_token);
+            self.advance();
+        }
+
+        if self.current_token == '\0' {
+            return Err(LexerError::UnterminatedString { text: value });
+        }
+
+        self.advance();
+        Ok(Token {
+            token_kind: TokenKind::STRING,
+            token_value: value,
+        })
     }
-
-    if self.current_token == '\0' {
-        return Err(LexerError::UnterminatedString { text: value });
-    }
-
-    self.advance();
-    Ok(Token {
-        token_kind: TokenKind::STRING,
-        token_value: value,
-    })
-}
-
-
-
-
-
-
 }

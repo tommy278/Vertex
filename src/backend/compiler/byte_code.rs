@@ -1,22 +1,27 @@
 use crate::backend::{
     ast::nodes::{
-        ArrayNode, BinaryOpNode, BoolNode, CallType, FloatNode, FunctionCallNode, NumberNode, PrefixExpressionNode, ProgramNode, StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode
+        ArrayNode, BinaryOpNode, BoolNode, CallType, FloatNode, FunctionCallNode, ImportNode,
+        NumberNode, PrefixExpressionNode, ProgramNode, StringNode, VariableAccessNode,
+        VariableAssignNode, VariableDefineNode,
     },
     buildin_macros::get_macro::MacroManager,
     compiler::{
-         comptime_variable_checker::{
+        comptime_variable_checker::{
             comptime_context::{CompileContext, ComptimeVariable},
             comptime_value_for_check::ComptimeValueType::{
                 self, Array, Bool, Float, Int, StringValue, Void,
             },
-        }, functions_compiler_context::CompileTimeFunctionForCheck, instructions::Instructions::{
+        },
+        functions_compiler_context::CompileTimeFunctionForCheck,
+        instructions::Instructions::{
             self, Add, Div, Halt, LoadVar, Mul, PushBool, PushNumber, PushString, Sub,
-        }, optimization::optimze::optimize
+        },
+        optimization::optimze::optimize,
+        saving_bytes::{self, save},
     },
-    errors::compiler::compiler_errors::CompileError::{
-        self, CannotInferType, TypeMismatch,
-    },
+    errors::compiler::compiler_errors::CompileError::{self, CannotInferType, TypeMismatch},
     lexer::tokens::TokenKind::{self, TRUE},
+    linker,
 };
 use CompileError::ConstantWithoutValue;
 use std::fmt::{self, Debug, Formatter};
@@ -41,7 +46,7 @@ pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
 }
 
-impl Clone for Box<dyn Compilable>  {
+impl Clone for Box<dyn Compilable> {
     fn clone(&self) -> Self {
         self.clone_box()
     }
@@ -51,13 +56,12 @@ pub struct Compiler {
     pub context: CompileContext,
     pub out: Vec<Instructions>,
     pub macros: MacroManager,
-    pub current_fn:String
+    pub current_fn: String,
 }
-
 
 impl Default for Compiler {
     fn default() -> Self {
-        Self::new()   
+        Self::new()
     }
 }
 impl Compiler {
@@ -66,7 +70,7 @@ impl Compiler {
             context: CompileContext::new(),
             out: Vec::new(),
             macros: MacroManager::new(),
-            current_fn:"none".into()
+            current_fn: "none".into(),
         }
     }
     pub fn optimize(&mut self) {
@@ -99,7 +103,7 @@ impl Compilable for PrefixExpressionNode {
         todo!()
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
-        write!(f,"{}{:?}",indent_fn(indent+1),self.prefix)?;
+        write!(f, "{}{:?}", indent_fn(indent + 1), self.prefix)?;
         self.value.fmt_with_indent(f, 0)
     }
 }
@@ -127,7 +131,11 @@ impl Compilable for BinaryOpNode {
                     compiler.out.push(Add);
                     Ok(StringValue)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "+", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "+",
+                    left,
+                    right,
+                }),
             },
             TokenKind::MINUS => match (&left, &right) {
                 (Int, Int) => {
@@ -138,7 +146,11 @@ impl Compilable for BinaryOpNode {
                     compiler.out.push(Sub);
                     Ok(Float)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "-", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "-",
+                    left,
+                    right,
+                }),
             },
             TokenKind::TIMES => match (&left, &right) {
                 (Int, Int) => {
@@ -149,7 +161,11 @@ impl Compilable for BinaryOpNode {
                     compiler.out.push(Mul);
                     Ok(Float)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "*", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "*",
+                    left,
+                    right,
+                }),
             },
             TokenKind::DIVIDE => match (&left, &right) {
                 (Int, Int) => {
@@ -160,28 +176,44 @@ impl Compilable for BinaryOpNode {
                     compiler.out.push(Div);
                     Ok(Float)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "/", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "/",
+                    left,
+                    right,
+                }),
             },
             TokenKind::MODULO => match (&left, &right) {
                 (Int, Int) => {
                     compiler.out.push(Instructions::Modulo);
                     Ok(Int)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "%", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "%",
+                    left,
+                    right,
+                }),
             },
             TokenKind::GREATER => match (&left, &right) {
                 (Int, Int) | (Float, Float) | (Int, Float) | (Float, Int) => {
                     compiler.out.push(Instructions::GreaterThan);
                     Ok(Bool)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: ">", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: ">",
+                    left,
+                    right,
+                }),
             },
             TokenKind::LESS => match (&left, &right) {
                 (Int, Int) | (Float, Float) | (Int, Float) | (Float, Int) => {
                     compiler.out.push(Instructions::LessThan);
                     Ok(Bool)
                 }
-                _ => Err(CompileError::InvalidBinaryOp { op: "<", left, right }),
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "<",
+                    left,
+                    right,
+                }),
             },
             _ => unreachable!(),
         }
@@ -288,13 +320,23 @@ impl Compilable for VariableDefineNode {
                 });
             }
         };
- 
-        compiler.context.add_variable(self.var_name.clone(), ComptimeVariable { value_type: final_type, is_const: self.is_const,tag:format!("{}_{}",self.var_name.clone(),compiler.current_fn.clone()) })?;
-        let tag = compiler.context.get_variable(&self.var_name).unwrap().tag.clone();
-        compiler
-            .out
-            .push(Instructions::SaveVar(tag));
-        
+
+        compiler.context.add_variable(
+            self.var_name.clone(),
+            ComptimeVariable {
+                value_type: final_type,
+                is_const: self.is_const,
+                tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn.clone()),
+            },
+        )?;
+        let tag = compiler
+            .context
+            .get_variable(&self.var_name)
+            .unwrap()
+            .tag
+            .clone();
+        compiler.out.push(Instructions::SaveVar(tag));
+
         Ok(Void)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -346,12 +388,15 @@ impl Compilable for VariableAssignNode {
         }
         // SAFETY: At this moment we surely know that the variable will exist and we dont need to
         // do normal 'unwrap'
-        unsafe{
+        unsafe {
+            let tag = compiler
+                .context
+                .get_variable(&self.name)
+                .unwrap_unchecked()
+                .tag
+                .clone();
 
-          let tag = compiler.context.get_variable(&self.name).unwrap_unchecked().tag.clone();
-
-          compiler.out.push(Instructions::SaveVar(tag));
-
+            compiler.out.push(Instructions::SaveVar(tag));
         }
 
         Ok(value_type)
@@ -382,10 +427,10 @@ impl Compilable for FunctionCallNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         match self.call_type {
             CallType::Macro => {
-                        // HACK: temporarily remove the macro from the map so we can call `compile`.
-                        // Otherwise the borrow checker complains because `compile` needs
-                        // a mutable reference to `compiler`, while the macro is stored inside it.
-                    let mac = compiler.macros.macros.remove(&self.name).ok_or(
+                // HACK: temporarily remove the macro from the map so we can call `compile`.
+                // Otherwise the borrow checker complains because `compile` needs
+                // a mutable reference to `compiler`, while the macro is stored inside it.
+                let mac = compiler.macros.macros.remove(&self.name).ok_or(
                     CompileError::UnknownMacro {
                         name: self.name.clone(),
                     },
@@ -396,35 +441,59 @@ impl Compilable for FunctionCallNode {
             }
             CallType::Fn => {
                 let old_fn = compiler.current_fn.clone();
-                let called_function:CompileTimeFunctionForCheck = compiler.context.get_fn(&self.name)?;
-                compiler.current_fn=self.name.clone();
-                if self.args.len()!=called_function.args.len() {
-                    return Err(CompileError::UnexpectedFunctionArguments { name: self.name.clone(), expected: called_function.args.len(), found: self.args.len() });
+                let called_function: CompileTimeFunctionForCheck =
+                    compiler.context.get_fn(&self.name)?;
+                compiler.current_fn = self.name.clone();
+                if self.args.len() != called_function.args.len() {
+                    return Err(CompileError::UnexpectedFunctionArguments {
+                        name: self.name.clone(),
+                        expected: called_function.args.len(),
+                        found: self.args.len(),
+                    });
                 }
                 compiler.context.enter_scope();
                 for (called_arg, fnc_arg) in self.args.iter().zip(called_function.args.iter()) {
                     let called_args_type = called_arg.compile(compiler)?;
 
-                    compiler.context.add_variable(fnc_arg.name.clone(), ComptimeVariable { value_type: called_args_type.clone(), is_const: false,tag:format!("{}{}",fnc_arg.name.clone(),self.name.clone()) })?; 
+                    compiler.context.add_variable(
+                        fnc_arg.name.clone(),
+                        ComptimeVariable {
+                            value_type: called_args_type.clone(),
+                            is_const: false,
+                            tag: format!("{}{}", fnc_arg.name.clone(), self.name.clone()),
+                        },
+                    )?;
                     let tag = compiler.context.get_variable(&fnc_arg.name).unwrap();
                     compiler.out.push(Instructions::SaveVar(tag.tag.clone()));
                     let final_fnc_type = CompileContext::get_type(&fnc_arg.argument_type)?;
                     if called_args_type != final_fnc_type {
-                        return Err(TypeMismatch { expected: final_fnc_type, found: called_args_type });
-                       
+                        return Err(TypeMismatch {
+                            expected: final_fnc_type,
+                            found: called_args_type,
+                        });
                     }
                 }
-                for statement in called_function.body  {
+                for statement in called_function.body {
                     statement.compile(compiler)?;
-                    
                 }
-                compiler.context.exit_scope(); 
-                compiler.current_fn=old_fn;
+                compiler.context.exit_scope();
+                compiler.current_fn = old_fn;
                 Ok(Void)
             }
         }
     }
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         writeln!(_f, "{}{}(...)", indent_fn(_indent), self.name)
+    }
+}
+
+impl Compilable for ImportNode {
+    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        let instr = save::compile_file_to_bytecode(self.module.clone());
+        compiler.out.extend(instr);
+        return Ok(Void);
+    }
+    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+        unimplemented!()
     }
 }

@@ -26,6 +26,44 @@ fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec
     }
 }
 
+pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
+    /*
+     * Lexer
+     */
+    let mut main_lexer: Tokenizer = Tokenizer::new(fs::read_to_string(&dir).unwrap());
+    let tokens: &Vec<Token> = match main_lexer.tokenize() {
+        Err(e) => {
+            println!("Error at {}:", &dir);
+            print!("{}", e);
+            process::exit(-1);
+        }
+        Ok(tokens) => tokens,
+    };
+    /*
+     * Parser
+     */
+    let mut main_parser: Parser = Parser::new(tokens.to_vec());
+    let parsed_ast = main_parser.parse().unwrap_or_else(|e| {
+        println!("Error at {}:", &dir);
+        println!("\x1b[1;31m{}\x1b[0m", e);
+        process::exit(-2)
+    });
+    /*
+     *Bytecode
+     */
+    let mut compiler = Compiler::new();
+    if let Err(e) = parsed_ast.compile(&mut compiler) {
+        println!("Error at {}:", &dir);
+        println!("\x1b[1;31m{}\x1b[0m", e);
+        println!("\x1b[1mTry:flarec error <error code> for fix\x1b[0m");
+        process::exit(-3);
+    }
+    compiler.optimize();
+    compiler.out
+}
+
+//NOTE:This is just entery point for the compilation process and it
+// shouldnt be used any further in the compilation process
 pub fn build(dir: String, out: String, debug: bool) {
     ensure_target_dir();
 
@@ -43,43 +81,15 @@ pub fn build(dir: String, out: String, debug: bool) {
         out
     );
 
-    /*
-     * Lexer
-     */
-    let mut main_lexer: Tokenizer = Tokenizer::new(fs::read_to_string(dir).unwrap());
-    let tokens: &Vec<Token> = match main_lexer.tokenize() {
-        Err(e) => {
-            print!("{}", e);
-            process::exit(-1);
-        }
-        Ok(tokens) => tokens,
-    };
-    /*
-     * Parser
-     */
-    let mut main_parser: Parser = Parser::new(tokens.to_vec());
-    let parsed_ast = main_parser.parse().unwrap_or_else(|e| {
-        println!("\x1b[1;31m{}\x1b[0m",e);
-        process::exit(-2)
-    });
-    /*
-     *Bytecode
-     */
-    let mut compiler = Compiler::new();
-    if let Err(e) = parsed_ast.compile(&mut compiler) {
-        println!("\x1b[1;31m{}\x1b[0m", e);
-        println!("\x1b[1mTry:flarec error <error code> for fix\x1b[0m");
-        process::exit(-3);
-    }
-    compiler.optimize();
+    let mut instructions = compile_file_to_bytecode(dir);
 
-    // Print debug information if debug flag is enabled
+    /*  Print debug information if debug flag is enabled
     if debug {
         debug_print(tokens, parsed_ast, &compiler.out);
-    }
+    }*/
 
     let out_path = format!("out/{}", out);
-    compile_to_exec(out_path, &mut compiler.out).expect("Cannot load binary file");
+    compile_instr_to_bytes(out_path, &mut instructions).expect("Cannot load binary file");
 
     // Calculate elapsed time and show success message
     let elapsed = start_time.elapsed();
@@ -88,7 +98,10 @@ pub fn build(dir: String, out: String, debug: bool) {
     println!("\x1b[1;32mFinished\x1b[0m in {:.3} seconds", seconds);
 }
 
-fn compile_to_exec(file_name: String, byte_code: &mut Vec<Instructions>) -> std::io::Result<()> {
+fn compile_instr_to_bytes(
+    file_name: String,
+    byte_code: &mut Vec<Instructions>,
+) -> std::io::Result<()> {
     let file = File::create(file_name)?;
     let mut writer = BufWriter::new(file);
     for instr in byte_code {
@@ -97,7 +110,7 @@ fn compile_to_exec(file_name: String, byte_code: &mut Vec<Instructions>) -> std:
             Instructions::Add => writer.write_all(&[opcode])?,
             Instructions::Sub => writer.write_all(&[opcode])?,
             Instructions::Mul => writer.write_all(&[opcode])?,
-            Instructions::Div => writer.write_all(&[opcode])?, 
+            Instructions::Div => writer.write_all(&[opcode])?,
             Instructions::Modulo => writer.write_all(&[opcode])?,
             Instructions::PushString(s) => {
                 writer.write_all(&[opcode])?;
@@ -129,7 +142,7 @@ fn compile_to_exec(file_name: String, byte_code: &mut Vec<Instructions>) -> std:
                 writer.write_all(&[opcode])?;
                 writer.write_all(&(*adr as u16).to_le_bytes())?;
             }
-           
+
             Instructions::LoadVar(v) => {
                 writer.write_all(&[opcode])?;
                 let bytes = v.as_bytes();

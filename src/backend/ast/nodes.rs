@@ -27,12 +27,12 @@ impl fmt::Debug for ProgramNode {
         self.fmt_with_indent(f, 0)
     }
 }
-impl Default for ProgramNode{
- fn default()->Self{
-    Self::new()
- }
+impl Default for ProgramNode {
+    fn default() -> Self {
+        Self::new()
+    }
 }
-/*  
+/*
 Binary Operation Node
 */
 #[derive(Clone)]
@@ -51,11 +51,10 @@ impl fmt::Debug for BinaryOpNode {
  * Unary expresion node
  */
 #[derive(Clone)]
-pub struct PrefixExpressionNode{
-    pub prefix:TokenKind,
-    pub value:Box<dyn Compilable>
+pub struct PrefixExpressionNode {
+    pub prefix: TokenKind,
+    pub value: Box<dyn Compilable>,
 }
-
 
 /*
 Number Node
@@ -182,3 +181,13 @@ impl Debug for FunctionCallNode {
     }
 }
 
+#[derive(Clone)]
+pub struct ImportNode {
+    pub module: String,
+}
+
+impl Debug for ImportNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.fmt_with_indent(f, 0)
+    }
+}

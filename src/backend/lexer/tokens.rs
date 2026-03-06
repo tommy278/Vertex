@@ -37,6 +37,7 @@ pub enum TokenKind {
     WHILE,
     UNDEF,
     AS,
+    USE,
     //EOF
     EOF,
     VALUE,
