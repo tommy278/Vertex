@@ -382,7 +382,10 @@ impl Compilable for FunctionCallNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         match self.call_type {
             CallType::Macro => {
-                let mac = compiler.macros.macros.remove(&self.name).ok_or(
+                        // HACK: temporarily remove the macro from the map so we can call `compile`.
+                        // Otherwise the borrow checker complains because `compile` needs
+                        // a mutable reference to `compiler`, while the macro is stored inside it.
+                    let mac = compiler.macros.macros.remove(&self.name).ok_or(
                     CompileError::UnknownMacro {
                         name: self.name.clone(),
                     },

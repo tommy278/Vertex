@@ -15,6 +15,9 @@ impl MacroManager {
             name: name.to_string(),
         })
     }
+
+    //TODO:Update macro storage for more elegant solution for Hack at
+    //../compiler/byte_code.rs at Function call node when calling Macro
     pub fn new() -> Self {
         let mut register = Self {
             macros: HashMap::new(),

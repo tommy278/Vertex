@@ -1,4 +1,12 @@
-//Imports
+// NOTE:
+// This is the main Flare compiler CLI used until `flauncher` is ready for production.
+// It is intended to compile a single file without external dependencies.
+// Currently it does not have a working linker.
+// Once `flauncher` is ready, this tool will likely be replaced or deprecated and not be ready for
+// production.
+
+
+
 use flare::backend::{
     compiler::saving_bytes::save::build,
     errors::cli_errors::CommandLineError::{

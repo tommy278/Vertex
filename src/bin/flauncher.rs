@@ -1,3 +1,4 @@
+//!Main flare package manager and linker
 use std::env::{self};
 use std::fs::{self,File};
 use std::io::Write;
@@ -30,6 +31,8 @@ fn main() {
                 }
             }
             "build" =>{
+                //TODO:Create linker to link all files in ./src based on prj.config file in program
+                //cwd
                 let tex = fs::read_to_string("prj.config").unwrap();
                 let config:Config = match toml::from_str(&tex) {
                    Err(e)=>{
