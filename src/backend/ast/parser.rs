@@ -3,8 +3,8 @@ use crate::backend::{
         nodes::{
             BinaryOpNode, BoolNode,
             CallType::{Fn, Macro},
-            FloatNode, FunctionCallNode, NumberNode, ProgramNode, StringNode, VariableAccessNode,
-            VariableAssignNode, VariableDefineNode,
+            FloatNode, FunctionCallNode, ImportNode, NumberNode, ProgramNode, StringNode,
+            VariableAccessNode, VariableAssignNode, VariableDefineNode,
         },
         statements::{
             functions::{args_node::FunctionArgs, function_nodes::FunctionDefineNode},
@@ -19,7 +19,7 @@ use crate::backend::{
         TokenKind::{
             self, CLOSINGBRACE, COLON, COMMA, CONST, DIVIDE, ELSE, EOF, EQUAL, FALSE, FLOAT, FNC,
             GREATER, IDENTIFIER, IF, LEFTPAREN, LESS, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS,
-            RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, VALUE, VAR, WHILE,
+            RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, USE, VALUE, VAR, WHILE,
         },
     },
 };
@@ -56,6 +56,13 @@ impl Parser {
     // just on top of the program for now
     fn parse_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         match &self.current_token().token_kind {
+            USE => {
+                self.advance();
+                let name_to_use = self.expect(STRING)?.token_value;
+                return Ok(Box::new(ImportNode {
+                    module: name_to_use,
+                }));
+            }
             VAR | CONST => {
                 let value = self.parse_var_decl_stmt();
                 self.expect(SEMICOLON)?;

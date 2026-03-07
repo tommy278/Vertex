@@ -132,6 +132,8 @@ impl Tokenizer {
         });
         Ok(&self.final_tokens)
     }
+    //FIXME:Out of bounds error if í,é,č etc is in the identifier name
+
     fn advance(&mut self) {
         self.token_idx += 1;
         if self.token_idx >= self.token_count {

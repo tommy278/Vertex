@@ -31,7 +31,9 @@ pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
     /*
      * Lexer
      */
-    let mut main_lexer: Tokenizer = Tokenizer::new(fs::read_to_string(&dir).unwrap());
+    let mut main_lexer: Tokenizer = Tokenizer::new(
+        fs::read_to_string(&dir).expect(format!("Cannot find module {}", &dir).as_ref()),
+    );
     let tokens: &Vec<Token> = match main_lexer.tokenize() {
         Err(e) => {
             println!("Error at {}:", &dir);
@@ -77,7 +79,7 @@ pub fn build(dir: String, out: String, debug: bool) {
         .unwrap_or_else(|_| std::path::PathBuf::from(&dir));
 
     println!(
-        "\x1b[1;32mBuilding\x1b[0m {} -> target/{}",
+        "\x1b[1;32mBuilding\x1b[0m {} -> out/{}",
         src_path.display(),
         out
     );

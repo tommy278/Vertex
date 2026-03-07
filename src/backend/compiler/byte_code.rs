@@ -1,8 +1,11 @@
 use crate::backend::{
-    ast::nodes::{
-        ArrayNode, BinaryOpNode, BoolNode, CallType, FloatNode, FunctionCallNode, ImportNode,
-        NumberNode, PrefixExpressionNode, ProgramNode, StringNode, VariableAccessNode,
-        VariableAssignNode, VariableDefineNode,
+    ast::{
+        nodes::{
+            ArrayNode, BinaryOpNode, BoolNode, CallType, FloatNode, FunctionCallNode, ImportNode,
+            NumberNode, PrefixExpressionNode, ProgramNode, StringNode, VariableAccessNode,
+            VariableAssignNode, VariableDefineNode,
+        },
+        parser::Parser,
     },
     buildin_macros::get_macro::MacroManager,
     compiler::{
@@ -17,13 +20,21 @@ use crate::backend::{
             self, Add, Div, Halt, LoadVar, Mul, PushBool, PushNumber, PushString, Sub,
         },
         optimization::optimze::optimize,
-        saving_bytes::save,
     },
     errors::compiler::compiler_errors::CompileError::{self, CannotInferType, TypeMismatch},
-    lexer::tokens::TokenKind::{self, TRUE},
+    lexer::{
+        tokenizer::Tokenizer,
+        tokens::{
+            Token,
+            TokenKind::{self, TRUE},
+        },
+    },
 };
 use CompileError::ConstantWithoutValue;
-use std::fmt::{self, Debug, Formatter};
+use std::{
+    fmt::{self, Debug, Formatter},
+    fs, process,
+};
 
 pub trait CompilableClone {
     fn clone_box(&self) -> Box<dyn Compilable>;
@@ -56,6 +67,7 @@ pub struct Compiler {
     pub out: Vec<Instructions>,
     pub macros: MacroManager,
     pub current_fn: String,
+    pub last_return_adress: Option<usize>,
 }
 
 impl Default for Compiler {
@@ -70,6 +82,7 @@ impl Compiler {
             out: Vec::new(),
             macros: MacroManager::new(),
             current_fn: "none".into(),
+            last_return_adress: None,
         }
     }
     pub fn optimize(&mut self) {
@@ -488,8 +501,41 @@ impl Compilable for FunctionCallNode {
 
 impl Compilable for ImportNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        let instr = save::compile_file_to_bytecode(self.module.clone());
-        compiler.out.extend(instr);
+        /*
+         * Lexer
+         */
+        let mut main_lexer: Tokenizer = Tokenizer::new(
+            fs::read_to_string(format!("src/{}", &self.module))
+                .expect(format!("Cannot find module {}", &self.module).as_ref()),
+        );
+        let tokens: &Vec<Token> = match main_lexer.tokenize() {
+            Err(e) => {
+                println!("Error at {}:", &self.module);
+                print!("{}", e);
+                process::exit(-1);
+            }
+            Ok(tokens) => tokens,
+        };
+        /*
+         * Parser
+         */
+        let mut main_parser: Parser = Parser::new(tokens.to_vec());
+        let parsed_ast = main_parser.parse().unwrap_or_else(|e| {
+            println!("Error at {}:", &self.module);
+            println!("\x1b[1;31m{}\x1b[0m", e);
+            process::exit(-2)
+        });
+        /*
+         *Bytecode
+         */
+
+        if let Err(e) = parsed_ast.compile(compiler) {
+            println!("Error at {}:", &self.module);
+            println!("\x1b[1;31m{}\x1b[0m", e);
+            println!("\x1b[1mTry:flarec error <error code> for fix\x1b[0m");
+            process::exit(-3);
+        }
+        compiler.optimize();
         return Ok(Void);
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {

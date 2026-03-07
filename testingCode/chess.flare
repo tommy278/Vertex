@@ -1,5 +1,5 @@
-fnc printunderscores(count:numb):void{
-	var it:numb = 0;
+fnc printunderscores(count:int):void{
+	var it:int = 0;
 	while (it < count + 2)
 	{
 		it = it + 1;
@@ -8,19 +8,19 @@ fnc printunderscores(count:numb):void{
 	writeLn!("");
 }
 
-const size:numb = 10;
+const size:int = 10;
 printunderscores(size);
-var it:numb = 0;
+var it:int = 0;
 
 while (it < size)
 {
 	write!("|");
 	it = it + 1;
-	var it2:numb = 0;
+	var it2:int = 0;
 	while (it2 < size)
 	{
-		var rem:numb = 0;
-		var rem2:numb = 0;
+		var rem:int = 0;
+		var rem2:int = 0;
 		var tile:string = "X";
 		it2 = it2 + 1;
 		rem = it % 2;

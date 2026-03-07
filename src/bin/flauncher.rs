@@ -44,15 +44,12 @@ fn main() {
                     }
                     Ok(c) => c,
                 };
-                env::set_current_dir("src").unwrap_or_else(|e| {
-                    print!("cannot find ./src in current project");
-                    process::exit(-1);
-                });
-                File::open("main.flare").unwrap_or_else(|e| {
+
+                File::open("src/main.flare").unwrap_or_else(|e| {
                     print!("cannot find main.flare in ./src");
                     process::exit(-1);
                 });
-                build(format!("main.flare"), config.name, false);
+                build(format!("src/main.flare"), config.name, false);
             }
             _ => {}
         }
