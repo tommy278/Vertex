@@ -1,11 +1,7 @@
-use crate::backend::{
-    ast::parser::Parser,
-    compiler::{
-        byte_code::{Compilable, Compiler},
-        instructions::Instructions,
-    },
-    lexer::{lexer::Lexer, tokens::Token},
-};
+use crate::backend::{ast::parser::Parser, compiler::{
+    byte_code::{Compilable, Compiler},
+    instructions::Instructions,
+}, lexer::{lexer::Lexer, tokens::Token}, linker};
 
 use std::{
     fs,
@@ -19,6 +15,7 @@ use std::collections::HashMap;
 use walkdir::WalkDir;
 use crate::backend::linker::link::GlobalSymbols;
 use crate::backend::linker::obj_file::ObjFile;
+use crate::backend::linker::link::Linker;
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -104,13 +101,15 @@ pub fn build_directory(dir: String, out: String, _debug: bool) {
         objs.push(obj_file);
 
     }
+    //LINKING
+    let mut final_file = Linker::link(objs);
 
 
     //TODO:This will be used to write the whole .out after the linking
-    /*
+
     let out_path = format!("out/{}", out);
-    compile_instr_to_bytes(out_path, &mut obj_file.instructions).expect("Cannot load binary file");
-    */
+    compile_instr_to_bytes(out_path, &mut final_file).expect("Cannot load binary file");
+
 
     // Calculate elapsed time and show success message
     let elapsed = start_time.elapsed();
