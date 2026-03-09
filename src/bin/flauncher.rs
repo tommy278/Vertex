@@ -34,8 +34,7 @@ fn main() {
                 }
             }
             "build" => {
-                //TODO:Create linker to link all files in ./src based on prj.config file in program
-                //cwd
+                
                 let tex = fs::read_to_string("prj.toml").unwrap();
                 let config: Config = match toml::from_str(&tex) {
                     Err(e) => {

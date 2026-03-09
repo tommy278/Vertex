@@ -1,8 +1,10 @@
 use crate::backend::{ast::parser::Parser, compiler::{
     byte_code::{Compilable, Compiler},
     instructions::Instructions,
-}, lexer::{lexer::Lexer, tokens::Token}, linker};
+}, lexer::{lexer::Lexer, tokens::Token}};
 
+use crate::backend::linker::link::Linker;
+use crate::backend::linker::obj_file::ObjFile;
 use std::{
     fs,
     fs::File,
@@ -11,11 +13,7 @@ use std::{
     process,
     time::Instant,
 };
-use std::collections::HashMap;
 use walkdir::WalkDir;
-use crate::backend::linker::link::GlobalSymbols;
-use crate::backend::linker::obj_file::ObjFile;
-use crate::backend::linker::link::Linker;
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -56,11 +54,14 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
      * Lookup table
     */
     let mut compiler = Compiler::new();
-    parsed_ast.add_to_lookup(&mut compiler);
+    parsed_ast.add_to_lookup(&mut compiler).unwrap();
+    /*
+    * Type checker
+    */
+    parsed_ast.add_to_type_check(&mut compiler).unwrap();
     /*
      *Bytecode
      */
-
     if let Err(e) = parsed_ast.compile(&mut compiler) {
         println!("Error at {}:", &dir);
         println!("\x1b[1;31m{}\x1b[0m", e);

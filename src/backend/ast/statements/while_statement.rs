@@ -7,7 +7,6 @@ use crate::backend::{
     errors::compiler::compiler_errors::CompileError,
 };
 use crate::backend::compiler::byte_code::Compiler;
-use crate::backend::linker::link::GlobalSymbols;
 
 #[derive(Clone)]
 pub struct WhileStatement {
@@ -49,8 +48,15 @@ impl Compilable for WhileStatement {
     ) -> std::fmt::Result {
         writeln!(_f, "if")
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+
+    }
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        ComptimeValueType::Void
+    }
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
     }
 }
 

@@ -18,7 +18,7 @@ pub struct GlobalSymbols{
 }
 
 pub struct Symbol{
-    pub symbol_value_type:ComptimeValueType,
+    pub symbol_value_type:Option<ComptimeValueType>,
     pub symbol_type:SymbolType,
     pub is_constant:bool,
     pub tag:String

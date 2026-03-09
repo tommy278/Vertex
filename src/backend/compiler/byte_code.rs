@@ -9,13 +9,13 @@ use crate::backend::{
     },
     buildin_macros::get_macro::MacroManager,
     compiler::{
-         comptime_variable_checker::{
+        comptime_variable_checker::{
             comptime_context::{CompileContext, ComptimeVariable},
             comptime_value_for_check::ComptimeValueType::{
                 self, Array, Bool, Float, Int, StringValue, Void,
             },
         }, functions_compiler_context::CompileTimeFunctionForCheck, instructions::Instructions::{
-            self, Add, Div, Halt, LoadVar, Mul, PushBool, PushNumber, PushString, Sub,
+            self, Add, Div, Halt, Mul, PushBool, PushNumber, PushString, Sub,
         }, optimization::optimze::optimize
     },
     errors::compiler::compiler_errors::CompileError::{self, CannotInferType, TypeMismatch},
@@ -25,15 +25,14 @@ use crate::backend::{
             Token,
             TokenKind::{self, TRUE},
         },
-    }, linker::link::{GlobalSymbols, Symbol,SymbolType},
-};
-use CompileError::ConstantWithoutValue;
-use std::{
-    fmt::{self, Debug, Formatter},
-    fs, process,
+    }, linker::link::{GlobalSymbols, Symbol, SymbolType},
 };
 use std::collections::HashMap;
-use crate::backend::errors::compiler::compiler_errors::CompileError::VariableRecreation;
+use std::{
+    fmt::{self, Debug, Formatter}, fs, process
+};
+use CompileError::ConstantWithoutValue;
+use crate::backend::linker::link::SymbolType::Variable;
 
 pub trait CompilableClone {
     fn clone_box(&self) -> Box<dyn Compilable>;
@@ -50,7 +49,12 @@ where
 pub trait Compilable: Debug + CompilableClone {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result;
-    fn add_to_lookup(&self, compiler: &mut Compiler);
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
+    /*
+     * Types
+    */
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType;
 }
 pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
@@ -69,6 +73,7 @@ pub struct Compiler {
     pub current_fn: String,
     pub last_return_address: Option<usize>,
     pub lookup: GlobalSymbols,
+    pub variables_type:HashMap<String,ComptimeValueType>
 }
 
 impl Default for Compiler {
@@ -86,7 +91,8 @@ impl Compiler {
             last_return_address: None,
             lookup:GlobalSymbols{
                 symbols:HashMap::new(),
-            }
+            },
+            variables_type: HashMap::new(),
         }
     }
     pub fn optimize(&mut self) {
@@ -102,8 +108,17 @@ impl Compilable for NumberNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Number({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
         
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        Int
     }
 
 }
@@ -116,8 +131,16 @@ impl Compilable for FloatNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Float({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        Float
     }
 }
 
@@ -129,8 +152,16 @@ impl Compilable for PrefixExpressionNode {
         write!(f, "{}{:?}", indent_fn(indent + 1), self.prefix)?;
         self.value.fmt_with_indent(f, 0)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        todo!()
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        todo!()
     }
 }
 impl Debug for PrefixExpressionNode {
@@ -251,8 +282,17 @@ impl Compilable for BinaryOpNode {
         self.right.fmt_with_indent(f, indent + 2)?;
         Ok(())
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+       //TODO:Add type checker 
+       todo!()
     }
 }
 
@@ -271,11 +311,23 @@ impl Compilable for ProgramNode {
         }
         Ok(())
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         for node in &self.program_nodes{
-            node.add_to_lookup(compiler);
+            node.add_to_lookup(compiler)?;
         }
+        Ok(())
 
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        for node in &self.program_nodes {
+            node.add_to_type_check(compiler)?;
+        }
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        Void
     }
 }
 
@@ -287,8 +339,16 @@ impl Compilable for StringNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
 
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        StringValue
     }
 
 }
@@ -331,6 +391,8 @@ impl Compilable for VariableDefineNode {
         };
 
 
+        //NOTE:We don't check the lookup because we enable imported variable shadowing for
+        //simplicity
         compiler.context.add_variable(
             self.var_name.clone(),
             ComptimeVariable {
@@ -356,33 +418,68 @@ impl Compilable for VariableDefineNode {
         Ok(())
     }
 
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         unsafe {
-            if self.is_public {
-                self.value_type.clone().expect("Public variables cannot infer type");
-                let symbol_type = self.value_type.clone().unwrap_unchecked();
+            if !&self.value_type.is_none() {
+                let my_type = CompileContext::get_type(&self.value_type.clone().unwrap_unchecked())?;
                 compiler.lookup.symbols.insert(
                     self.var_name.clone(),
-                    Symbol {
-                        symbol_value_type: CompileContext::get_type(&symbol_type).unwrap(),
-                        symbol_type: SymbolType::Variable,
-                        is_constant: self.is_const,
-                        tag: format!("{}_{}", self.var_name, compiler.current_fn),
-                    },
+                    Symbol{
+                        symbol_value_type:Some(my_type),
+                        symbol_type:Variable,
+                        is_constant:self.is_const,
+                        tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn),
+                    }
+                );
+            }
+            else {
+                compiler.lookup.symbols.insert(
+                    self.var_name.clone(),
+                    Symbol{
+                        symbol_value_type:None,
+                        symbol_type:Variable,
+                        is_constant:self.is_const,
+                        tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn),
+                    }
                 );
             }
         }
+        Ok(())
+
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        let my_type = self.my_type(compiler);
+        compiler.variables_type.insert(self.var_name.clone(), my_type.clone());
+        if compiler.lookup.symbols.contains_key(&self.var_name.clone()) {
+            unsafe { compiler.lookup.symbols.get_mut(&self.var_name).unwrap_unchecked().symbol_value_type = Some(my_type); }
+        }
+        Ok(())
+    }
+
+    fn my_type(&self, compiler: &mut Compiler) -> ComptimeValueType {
+
+        if let Some(t) = &self.value_type {
+            return CompileContext::get_type(t).unwrap();
+        }
+
+        if let Some(value) = &self.value {
+            return value.my_type(compiler);
+        }
+
+        panic!("Cannot infer type");
     }
 }
 
 impl Compilable for VariableAccessNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-
-        let (value_type, tag) = if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
-            (symbol.symbol_value_type.clone(), symbol.tag.clone())
-        } else if let Some(var) = compiler.context.get_variable(&self.variable_name) {
+        //NOTE:We are first looking to module context because we enable priority for private
+        //variables and constants and its simpler and maybe faster
+        let (value_type, tag) = if let Some(var) = compiler.context.get_variable(&self.variable_name) {
             (var.value_type.clone(), var.tag.clone())
-        } else {
+        } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
+            unsafe { (symbol.symbol_value_type.clone().unwrap_unchecked(), symbol.tag.clone()) }
+        }else {
             return Err(CompileError::UndefinedVariable { name: self.variable_name.clone() });
         };
 
@@ -395,17 +492,37 @@ impl Compilable for VariableAccessNode {
         writeln!(f, "{}Var({})", indent_fn(indent), self.variable_name)
     }
 
-    fn add_to_lookup(&self, _compiler: &mut Compiler) {}
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        let value_type = if let Some(var) = compiler.variables_type.get(&self.variable_name) {
+            var
+        } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
+            &symbol.symbol_value_type.clone().expect("Cannot have symbol without type")
+        }else {
+           unreachable!() 
+        };
+        value_type.clone()
+
+    }
 }
 
 impl Compilable for VariableAssignNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        // Lookup-first: symbols -> context
-        let (is_const, expected_type, tag) = if let Some(symbol) = compiler.lookup.symbols.get(&self.name) {
-            (symbol.is_constant, symbol.symbol_value_type.clone(), symbol.tag.clone())
-        } else if let Some(var) = compiler.context.get_variable(&self.name) {
+       
+        //NOTE:We are first looking to module context because we enable priority for private
+        //variables and constants and its simpler and maybe faster
+        let (is_const, expected_type, tag) =  if let Some(var) = compiler.context.get_variable(&self.name) {
             (var.is_const, var.value_type.clone(), var.tag.clone())
-        } else {
+        } else if let Some(symbol) = compiler.lookup.symbols.get(&self.name) {
+            (symbol.is_constant, symbol.symbol_value_type.clone().expect("Something fucked up"), symbol.tag.clone())
+        }else {
             return Err(CompileError::UndefinedVariable { name: self.name.clone() });
         };
 
@@ -430,7 +547,17 @@ impl Compilable for VariableAssignNode {
         Ok(())
     }
 
-    fn add_to_lookup(&self, _compiler: &mut Compiler) {}
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        Void
+    }
 }
 impl Compilable for BoolNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
@@ -442,8 +569,17 @@ impl Compilable for BoolNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({:?})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
 
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        Bool
     }
 }
 /*
@@ -461,8 +597,16 @@ impl Compilable for ArrayNode {
         }
         writeln!(f, "{}]", " ".repeat(indent))
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        todo!()
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        todo!()
     }
 }
 impl Compilable for FunctionCallNode {
@@ -527,9 +671,16 @@ impl Compilable for FunctionCallNode {
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         writeln!(_f, "{}{}(...)", indent_fn(_indent), self.name)
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
-       
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+       todo!() 
     }
 }
 
@@ -538,12 +689,12 @@ impl Compilable for ImportNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         
 
-        return Ok(Void);
+        Ok(Void)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         unimplemented!()
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         /*
          * Lexer
          */
@@ -568,7 +719,17 @@ impl Compilable for ImportNode {
             println!("\x1b[1;31m{}\x1b[0m", e);
             process::exit(-2)
         });
-        parsed_ast.add_to_lookup(compiler);
+        parsed_ast.add_to_lookup(compiler)?;
+        parsed_ast.add_to_type_check(compiler)?;
+        Ok(())
         
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+       Void
     }
 }

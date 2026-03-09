@@ -4,7 +4,6 @@ use crate::backend::compiler::byte_code::Compilable;
 use crate::backend::compiler::byte_code::Compiler;
 use crate::backend::compiler::comptime_variable_checker::comptime_value_for_check::ComptimeValueType;
 use crate::backend::errors::compiler::compiler_errors::CompileError;
-use crate::backend::linker::link::GlobalSymbols;
 
 #[derive(Clone)]
 pub struct StructVariable{
@@ -23,8 +22,17 @@ impl Compilable for StructDefineNode{
     fn fmt_with_indent(&self, f: &mut std::fmt::Formatter<'_>, indent: usize) -> std::fmt::Result {
         todo!()
     }
-    fn add_to_lookup(&self, compiler: &mut Compiler) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
         
+    }
+
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        todo!()
+    }
+
+    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+        todo!()
     }
 }
 impl Debug for StructDefineNode{

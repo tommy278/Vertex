@@ -137,15 +137,15 @@ impl VM {
                     self.ip += 1;
                 }
 
-                Instructions::WriteLnLastOnStack => {
-                    let val = self.pop()?;
-                    match val {
-                        StringValue(s) => println!("{}", s),
-                        Number(n) => println!("{}", n.to_string()),
-                        _ => unreachable!(),
+                    Instructions::WriteLnLastOnStack => {
+                        let val = self.pop()?;
+                        match val {
+                            StringValue(s) => println!("{}", s),
+                            Number(n) => println!("{}", n.to_string()),
+                            _ => unreachable!(),
+                        }
+                        self.ip += 1;
                     }
-                    self.ip += 1;
-                }
 
                 Instructions::WriteLastOnStack => {
                     let val = self.pop()?;
