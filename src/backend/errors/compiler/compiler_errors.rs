@@ -4,6 +4,7 @@ use thiserror::Error;
 //TODO:Update to error handeling with lines and update the error messages.
 
 #[derive(Debug, Error)]
+#[derive(Clone)]
 pub enum CompileError {
     #[error("[E0001]Unknown macro: {name}")]
     UnknownMacro { name: String },

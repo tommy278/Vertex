@@ -31,7 +31,7 @@ impl Compilable for StructDefineNode{
         todo!()
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         todo!()
     }
 }

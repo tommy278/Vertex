@@ -58,8 +58,8 @@ impl Compilable for FunctionDefineNode {
         todo!()
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        ComptimeValueType::Void
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(ComptimeValueType::Void)
     }
 }
 

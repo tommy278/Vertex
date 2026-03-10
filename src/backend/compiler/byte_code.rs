@@ -1,3 +1,4 @@
+use crate::backend::linker::link::SymbolType::Variable;
 use crate::backend::{
     ast::{
         nodes::{
@@ -15,7 +16,7 @@ use crate::backend::{
                 self, Array, Bool, Float, Int, StringValue, Void,
             },
         }, functions_compiler_context::CompileTimeFunctionForCheck, instructions::Instructions::{
-            self, Add, Div, Halt, Mul, PushBool, PushNumber, PushString, Sub,
+            self, Add, Div, Mul, PushBool, PushNumber, PushString, Sub,
         }, optimization::optimze::optimize
     },
     errors::compiler::compiler_errors::CompileError::{self, CannotInferType, TypeMismatch},
@@ -25,14 +26,13 @@ use crate::backend::{
             Token,
             TokenKind::{self, TRUE},
         },
-    }, linker::link::{GlobalSymbols, Symbol, SymbolType},
+    }, linker::link::{GlobalSymbols, Symbol},
 };
 use std::collections::HashMap;
 use std::{
     fmt::{self, Debug, Formatter}, fs, process
 };
 use CompileError::ConstantWithoutValue;
-use crate::backend::linker::link::SymbolType::Variable;
 
 pub trait CompilableClone {
     fn clone_box(&self) -> Box<dyn Compilable>;
@@ -54,7 +54,7 @@ pub trait Compilable: Debug + CompilableClone {
      * Types
     */
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType;
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
 }
 pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
@@ -117,8 +117,8 @@ impl Compilable for NumberNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        Int
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Int)
     }
 
 }
@@ -139,8 +139,8 @@ impl Compilable for FloatNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        Float
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Float)
     }
 }
 
@@ -160,7 +160,7 @@ impl Compilable for PrefixExpressionNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         todo!()
     }
 }
@@ -290,7 +290,7 @@ impl Compilable for BinaryOpNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
        //TODO:Add type checker 
        todo!()
     }
@@ -325,8 +325,8 @@ impl Compilable for ProgramNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        Void
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
     }
 }
 
@@ -346,8 +346,8 @@ impl Compilable for StringNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        StringValue
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(StringValue)
     }
 
 }
@@ -446,24 +446,48 @@ impl Compilable for VariableDefineNode {
 
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         let my_type = self.my_type(compiler);
-        compiler.variables_type.insert(self.var_name.clone(), my_type.clone());
+        compiler.variables_type.insert(self.var_name.clone(), my_type.clone()?);
         if compiler.lookup.symbols.contains_key(&self.var_name.clone()) {
-            unsafe { compiler.lookup.symbols.get_mut(&self.var_name).unwrap_unchecked().symbol_value_type = Some(my_type); }
+            unsafe { compiler.lookup.symbols.get_mut(&self.var_name).unwrap_unchecked().symbol_value_type = Some(my_type?); }
         }
         Ok(())
     }
 
-    fn my_type(&self, compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
 
-        if let Some(t) = &self.value_type {
-            return CompileContext::get_type(t).unwrap();
-        }
 
-        if let Some(value) = &self.value {
-            return value.my_type(compiler);
-        }
+        let inferred_type = if let Some(value) = &self.value {
+            Some(value.my_type(compiler)?)
+        } else {
+            None
+        };
 
-        panic!("Cannot infer type");
+        let declared_type = if let Some(t) = &self.value_type {
+            Some(CompileContext::get_type(t)?)
+        } else {
+            None
+        };
+
+        let final_type = match (declared_type, inferred_type) {
+            (Some(d), Some(i)) if d == i => d,
+            (Some(d), Some(i)) => return Err(TypeMismatch { expected: d, found: i }),
+            (Some(d), None) => {
+
+                match d {
+                    StringValue => compiler.out.push(PushString("".to_string())),
+                    Int => compiler.out.push(PushNumber(0f32)),
+                    Float => compiler.out.push(PushNumber(0f32)),
+                    Bool => compiler.out.push(PushBool(false)),
+                    Array(_) => todo!(),
+                    Void => unreachable!(),
+                }
+                d
+            }
+            (None, Some(i)) => i,
+            (None, None) => return Err(CannotInferType { name: self.var_name.clone() }),
+        };
+        Ok(final_type)
+
     }
 }
 
@@ -496,7 +520,7 @@ impl Compilable for VariableAccessNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         let value_type = if let Some(var) = compiler.variables_type.get(&self.variable_name) {
             var
         } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
@@ -504,7 +528,7 @@ impl Compilable for VariableAccessNode {
         }else {
            unreachable!() 
         };
-        value_type.clone()
+        Ok(value_type.clone())
 
     }
 }
@@ -551,8 +575,8 @@ impl Compilable for VariableAssignNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        Void
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
     }
 }
 impl Compilable for BoolNode {
@@ -574,8 +598,8 @@ impl Compilable for BoolNode {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
-        Bool
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Bool)
     }
 }
 /*
@@ -601,7 +625,7 @@ impl Compilable for ArrayNode {
         todo!()
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         todo!()
     }
 }
@@ -676,7 +700,7 @@ impl Compilable for FunctionCallNode {
         Ok(())
     }
 
-    fn my_type(&self,_compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
        todo!() 
     }
 }
@@ -726,7 +750,7 @@ impl Compilable for ImportNode {
         Ok(())
     }
 
-    fn my_type(&self,_compiler: &mut Compiler) -> ComptimeValueType {
-       Void
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
     }
 }
