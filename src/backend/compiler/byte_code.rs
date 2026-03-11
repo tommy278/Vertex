@@ -37,6 +37,7 @@ use std::{
     fs, process,
 };
 use crate::backend::ast::nodes::CallType::Macro;
+use crate::backend::compiler::instructions::Instructions::Drop;
 use crate::backend::errors::compiler::compiler_errors::CompileError::UndefinedVariable;
 
 pub trait CompilableClone {
@@ -105,6 +106,12 @@ impl Compiler {
     pub fn optimize(&mut self) {
         let code = self.out.clone();
         self.out = optimize(code);
+    }
+    pub fn exit_scope(&mut self) {
+        for (var_name,_) in self.context.scopes.last().unwrap() {
+            self.out.push(Drop(var_name.clone()));
+        }
+        self.context.exit_scope();
     }
 }
 impl Compilable for NumberNode {
@@ -801,7 +808,7 @@ impl Compilable for FunctionCallNode {
                 for statement in &mut called_function.body {
                     statement.compile(compiler)?;
                 }
-                compiler.context.exit_scope();
+                compiler.exit_scope();
                 compiler.current_fn = old_fn;
                 Ok(Void)
             }

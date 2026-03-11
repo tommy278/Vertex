@@ -18,7 +18,7 @@ pub const JUMP_IF_TRUE:u8 = 42;
 pub const  PUSH_STR:u8 = 20;
 pub const  PUSH_BOOL:u8 = 21;
 pub const PUSH_NUMB:u8 = 22;
-
+pub const DROP:u8 = 23;
 // IO
 pub const WRITE_LN:u8 = 30;
 pub const WRITE:u8 = 31;
@@ -53,6 +53,7 @@ pub enum Instructions {
     PushBool(bool),
     PushNumber(f32),
     ReadInput,
+    Drop(String),
     //Printing
     WriteLnLastOnStack,
     WriteLastOnStack,
@@ -80,12 +81,11 @@ impl Instructions {
             Instructions::GreaterThan => GREATER,
             Instructions::LessThan => LESS,
             Instructions::Equal => EQUAL,
-
-
-
+            
             Instructions::PushString(_) => PUSH_STR,
             Instructions::PushBool(_) => PUSH_BOOL,
             Instructions::PushNumber(_) => PUSH_NUMB,
+            Instructions::Drop(_) => DROP,
 
             Instructions::WriteLnLastOnStack => WRITE_LN,
             Instructions::WriteLastOnStack => WRITE,

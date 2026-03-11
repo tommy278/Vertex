@@ -202,6 +202,12 @@ fn compile_instr_to_bytes(
                 writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
                 writer.write_all(&s.as_bytes())?
             }
+            Instructions::Drop(s) => {
+                writer.write_all(&[opcode])?;
+                let bytes = s.as_bytes();
+                writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
+                writer.write_all(&s.as_bytes())?
+            }
 
             //Values
             Instructions::PushBool(b) => {

@@ -33,7 +33,7 @@ impl Compilable for WhileStatement {
         for statement in &mut self.body {
             statement.compile(compiler)?;
         }
-        compiler.context.exit_scope();
+        compiler.exit_scope();
         self.condition.compile(compiler)?;
         compiler
             .out
@@ -52,11 +52,11 @@ impl Compilable for WhileStatement {
         Ok(())
 
     }
-    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        Ok(ComptimeValueType::Void)
-    }
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         Ok(())
+    }
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(ComptimeValueType::Void)
     }
 }
 

@@ -234,12 +234,17 @@ impl VM {
                     self.stack.push(StringValue(input.trim().to_string()));
                     self.ip += 1;
                 }
+                Instructions::Drop(variable) =>{
+                    self.variables.remove(&variable);
+                    self.ip += 1;
+                }
                 Instructions::Halt => {
                     if !self.stack.is_empty() {
                         println!("{:?}", self.stack[0]);
                     }
                     break;
                 }
+
             }
         }
         Ok(())

@@ -33,6 +33,11 @@ impl BytecodeLoader {
                     let s = self.read_string(len)?;
                     Instructions::PushString(s)
                 }
+                instructions::DROP => {
+                    let len = self.read_u32()? as usize;
+                    let s = self.read_string(len)?;
+                    Instructions::Drop(s)
+                }
 
                 instructions::LOAD_VAR => {
                     let len = self.read_u32()? as usize;

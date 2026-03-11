@@ -37,7 +37,8 @@ impl CompileContext {
     pub fn exit_scope(&mut self) {
         self.scopes
             .pop()
-            .expect("Fatal error: stack undeflow at compilation!");
+            .expect("Fatal error: stack underflow at compilation!");
+
     }
     pub fn enter_scope(&mut self) {
         self.scopes.push(HashMap::new());

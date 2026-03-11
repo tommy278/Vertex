@@ -27,7 +27,7 @@ impl Compilable for IfStatement {
         for stmt in &mut self.then_branch {
             stmt.compile(compiler)?;
         }
-        compiler.context.exit_scope();
+        compiler.exit_scope();
         let jump_end_pos = compiler.out.len();
         compiler.out.push(Instructions::Jump(0)); // Placeholder for end jump instruction
 
