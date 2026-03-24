@@ -1,0 +1,19 @@
+fnc foo():void{
+	var vtx = 5;
+}
+fnc printunderscores(count:int):void{
+	var vtx = 3;
+	while (it < count + 2)
+	{
+		it = it + 1;
+		write!("_");
+	}
+	writeLn!(""); 
+	foo();
+}
+
+
+var it:int = 0;
+const size:int = 10;
+printunderscores(size);
+writeLn!(it);

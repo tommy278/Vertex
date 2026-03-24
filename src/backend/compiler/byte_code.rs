@@ -130,7 +130,7 @@ impl Compiler {
                    *instruction = Instructions::Jump(length);
                 } 
             }
-            self.context.enter_scope();
+            self.context.enter_function_scope();
             for argumet in function.args{ 
                 let argument_type = self.context.get_type(&argumet.argument_type)?;
                 self.context.add_variable(
@@ -148,7 +148,7 @@ impl Compiler {
                 
             }
             self.out.push(Instructions::JumpOnLastOnStack);
-            self.context.exit_scope();
+            self.context.exit_function_scope();
         }
         self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
         Ok(())

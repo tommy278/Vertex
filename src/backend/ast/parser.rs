@@ -1,10 +1,7 @@
 use crate::backend::{
     ast::{
         nodes::{
-            BinaryOpNode, BoolNode,
-            CallType::{Fn, Macro},
-            FloatNode, FunctionCallNode, ImportNode, NumberNode, ProgramNode, StringNode,
-            VariableAccessNode, VariableAssignNode, VariableDefineNode,
+            BinaryOpNode, BoolNode, CallType::{Fn, Macro}, FloatNode, FunctionCallNode, ImportNode, NumberNode, ProgramNode, ReturnNode, StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode
         },
         statements::{
             if_statement::IfStatement,
@@ -28,6 +25,7 @@ pub struct Parser {
     tokens: Vec<Token>,
     token_idx: usize,
     on_top_statement: bool,
+    in_function:bool,
 }
 impl Parser {
     pub fn new(token_list: Vec<Token>) -> Self {
@@ -35,6 +33,7 @@ impl Parser {
             tokens: token_list,
             token_idx: 0,
             on_top_statement: true,
+            in_function:false
         }
     }
 
@@ -77,9 +76,23 @@ impl Parser {
     }
 
     //WARN:Do not use import in other statements
-    // just on top of the program for now
+    //just on top of the program for now
     fn parse_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         match &self.current_token().token_kind {
+            TokenKind::RETURN=>{
+                self.advance();
+                if self.current_token().token_kind == SEMICOLON{
+                    self.expect(SEMICOLON)?;
+                    return Ok(Box::new(ReturnNode{
+                        returns:None
+                    }))
+                }
+                else {
+                    let value = self.parse_expr()?;
+                    self.expect(SEMICOLON)?;
+                    return Ok(Box::new(ReturnNode{returns:Some(value)}));
+                }
+            },
             TokenKind::EXP =>{
                 self.advance();
                 if self.current_token().token_kind == CONST || self.current_token().token_kind == VAR {
@@ -215,6 +228,7 @@ impl Parser {
                 return Ok(Box::new(WhileStatement { condition, body }));
             }
             FNC => {
+                self.in_function = true;
                 let mut args = Vec::new();
                 self.advance(); //FN
                 let id = self.expect(IDENTIFIER)?;
@@ -252,6 +266,7 @@ impl Parser {
                     body.push(self.parse_stmt()?);
                 }
                 self.expect(CLOSINGBRACE)?;
+                self.in_function = false;
 
                 Ok(Box::new(FunctionDefineNode {
                     id: id.token_value,

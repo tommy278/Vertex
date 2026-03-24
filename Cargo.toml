@@ -1,6 +1,6 @@
 [package]
 name = "vertex"
-version = "0.0.28-alpha"
+version = "0.0.32-alpha"
 edition = "2024"
 
 [dependencies]

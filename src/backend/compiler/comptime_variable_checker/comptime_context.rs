@@ -12,9 +12,12 @@ pub struct CompileContext {
     pub variables: HashMap<String, ComptimeVariable>,
     pub functions: HashMap<String, CompileTimeFunctionForCheck>,
     pub scopes: Vec<HashMap<String, ComptimeVariable>>,
-    current_variable_tag: String,
     pub structs:Vec<HashMap<String,ComptimeStructForCheck>>,
-    pub types:Vec<String>
+    pub types:Vec<String>,
+    pub function_depth:usize,
+    is_in_function_contex:bool,
+    last_fn_context:usize,
+
 }
 impl CompileContext {
     pub fn new() -> Self {
@@ -22,9 +25,11 @@ impl CompileContext {
             variables: HashMap::new(),
             functions: HashMap::new(),
             scopes: vec![HashMap::new()],
-            current_variable_tag: "default".into(),
             types:Vec::new(),
-            structs:Vec::new()
+            structs:Vec::new(),
+            is_in_function_contex:false,
+            last_fn_context:0,
+            function_depth:0,
 
         }
     }
@@ -51,7 +56,16 @@ impl CompileContext {
         self.scopes
             .pop()
             .expect("Fatal error: stack underflow at compilation!");
+    }
+    pub fn enter_function_scope(&mut self){
+        self.is_in_function_contex = true;
+        self.last_fn_context = self.scopes.len();
+        self.scopes.push(HashMap::new());
+    }
 
+    pub fn exit_function_scope(&mut self){
+        self.is_in_function_contex = false;
+        self.scopes.truncate(self.last_fn_context);
     }
     pub fn enter_scope(&mut self) {
         self.scopes.push(HashMap::new());
@@ -70,11 +84,19 @@ impl CompileContext {
         }
     }
     pub fn get_variable(&self, name: &str) -> Option<&ComptimeVariable> {
-        for scope in self.scopes.iter().rev() {
+        let visible_scopes =
+            if self.last_fn_context < self.scopes.len() {
+                self.scopes.len() - self.last_fn_context
+            } else {
+                self.scopes.len()
+            };
+
+        for scope in self.scopes.iter().rev().take(visible_scopes) {
             if let Some(v) = scope.get(name) {
                 return Some(v);
             }
         }
+
         None
     }
     pub fn add_function(
