@@ -1,3 +1,4 @@
+use crate::backend::ast::nodes::ReturnNode;
 use crate::backend::linker::link::SymbolType::Variable;
 use crate::backend::{
     ast::{
@@ -64,6 +65,7 @@ pub trait Compilable: Debug + CompilableClone {
 pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
 }
+
 
 impl Clone for Box<dyn Compilable> {
     fn clone(&self) -> Self {
@@ -813,7 +815,6 @@ impl Compilable for FunctionCallNode {
                 Ok(result)
             }
             CallType::Fn => {
-                //FIXME:Idk just fix the function arguments idk its not working
                 let old_fn = compiler.current_fn.clone();
                 let called_function: CompileTimeFunctionForCheck =
                     compiler.context.get_fn(&self.name)?;
@@ -874,8 +875,28 @@ impl Compilable for FunctionCallNode {
         }
     }
 }
-
-//FIXME:Add check for cyclic importing until imports are not macro.
+impl Compilable for ReturnNode {
+    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+        todo!()
+    }
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        if let Some(mut r) = self.returns.clone(){
+            r.compile(compiler)?;
+        }
+        compiler.out.push(Instructions::JumpOnLastOnStack);
+        Ok(Void)
+        
+    }
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
+    }
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+}
 impl Compilable for ImportNode {
     fn compile(&mut self, _compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
@@ -925,3 +946,4 @@ impl Compilable for ImportNode {
         Ok(Void)
     }
 }
+

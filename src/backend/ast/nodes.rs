@@ -193,3 +193,13 @@ impl Debug for ImportNode {
         self.fmt_with_indent(f, 0)
     }
 }
+#[derive(Clone)]
+pub struct ReturnNode{
+    pub returns:Option<Box<dyn Compilable>>
+}
+
+impl Debug for ReturnNode {
+   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+       self.fmt_with_indent(f,0)
+   } 
+}

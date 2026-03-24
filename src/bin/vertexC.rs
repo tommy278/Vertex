@@ -73,26 +73,31 @@ fn run_cli() -> Result<(), CommandLineError> {
             Ok(())
         }
         "help" =>{
-    println!(
-        r#"vertexC — compiler tool for Vertex
+        println!(
+            r#"vertexC — compiler tool for Vertex
 
-        vertexC compiles a single source file into Vertex bytecode.
-        It will remain available even after the 'vertex' project manager
-        is finished, mainly for testing and low-level workflows.
+            vertexC compiles a single source file into Vertex bytecode.
+            It will remain available even after the 'vertex' project manager
+            is finished, mainly for testing and low-level workflows.
 
-        USAGE:
-            vertexC build <INPUT_FILE> <OUTPUT_FILE>
-                Compile source file into bytecode stored in ./out/
+            USAGE:
+                vertexC build <INPUT_FILE> <OUTPUT_FILE>
+                    Compile source file into bytecode stored in ./out/
+                    flags:
+                        -d:show final instructions
 
-            vertexC run <BYTECODE>
-                Execute bytecode using VVM (Vertex Virtual Machine)
+                vertexC run <BYTECODE>
+                    Execute bytecode using VVM (Vertex Virtual Machine)
 
-            vertexC exec <INPUT_FILE> <OUTPUT_FILE>
-                Compile and immediately run the produced bytecode
-            vertexC error <ERORR_CODE>
-                Explains erorr more deeply
-        "#
-        );
+                vertexC exec <INPUT_FILE> <OUTPUT_FILE>
+                    Compile and immediately run the produced bytecode
+                    flags:
+                        -d:show final instructions
+
+                vertexC error <ERORR_CODE>
+                    Explains erorr more deeply
+            "#
+            );
             Ok(())
         }
         _ => Err(NoSuchCommand),

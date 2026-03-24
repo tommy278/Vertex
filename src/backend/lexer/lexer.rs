@@ -230,6 +230,10 @@ impl Lexer {
                 token_kind:TokenKind::EXP,
                 token_value: text_buffer,
             },
+            "return"=>Token{
+                token_kind:TokenKind::RETURN,
+                token_value:text_buffer 
+            },
 
             _ => Token {
                 token_kind: IDENTIFIER,
