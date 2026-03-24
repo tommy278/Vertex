@@ -123,12 +123,15 @@ impl Compiler {
             .iter()
             .map(|(name, function)| (name.clone(), function.clone()))
             .collect();
+        //NOTE:I know that this probably could be done fast becouse this is like O(n)
         for (name,function) in functions{
             let length = self.out.len();
             for instruction in &mut self.out {
-                if instruction.clone() == Instructions::Call(name.clone()) {
-                   *instruction = Instructions::Jump(length);
-                } 
+                if let Instructions::Call(n) = instruction {
+                    if n == &name {
+                        *instruction = Instructions::Jump(length);
+                    }
+                }
             }
             self.context.enter_function_scope();
             for argumet in function.args{ 
