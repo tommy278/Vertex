@@ -117,15 +117,16 @@ impl Compiler {
         }
         self.context.exit_scope();
     }
-    fn fix_function_jump_adresses(&mut self,fn_jmp_adresses:HashMap<String,usize>){
-        for (function,function_address) in fn_jmp_adresses {
-            for (function_call_name,address_of_call) in &self.function_call_addresses {
-                if *function_call_name == function {
-                    for jump_address in address_of_call {
-                        self.out[*jump_address] = Instructions::Jump(function_address)
-                    }
-                }                
-            } 
+    fn fix_function_jump_adresses(
+        &mut self,
+        fn_jmp_adresses: HashMap<String, usize>
+    ) {
+        for (function, function_address) in fn_jmp_adresses {
+            if let Some(calls) = self.function_call_addresses.get(&function) {
+                for &addr in calls {
+                    self.out[addr] = Instructions::Jump(function_address);
+                }
+            }
         }
     }
     pub fn add_function(&mut self)->Result<(),CompileError>{
@@ -140,13 +141,6 @@ impl Compiler {
         //was to lazy to implemnt that :D
         for (name,function) in functions{
             let length = self.out.len();
-            for instruction in &mut self.out {
-                if let Instructions::Call(n) = instruction {
-                    if n == &name {
-                        *instruction = Instructions::Jump(length);
-                    }
-                }
-            }
             self.context.enter_function_scope();
             for argumet in function.args{ 
                 let argument_type = self.context.get_type(&argumet.argument_type)?;
@@ -167,6 +161,7 @@ impl Compiler {
             self.context.exit_function_scope();
             fn_jmp_addresses.insert(name.clone(), length);
         }
+        self.fix_function_jump_adresses(fn_jmp_addresses);
         self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
         Ok(())
     } 
@@ -844,6 +839,12 @@ impl Compilable for FunctionCallNode {
 
                 compiler.out.push(Instructions::PushUsize(compiler.out.len()+2));
                 compiler.out.push(Instructions::Call(self.name.clone()));
+                if let Some(a) = compiler.function_call_addresses.get_mut(&self.name){
+                    a.push(compiler.out.len()-1);
+                }
+                else {
+                    compiler.function_call_addresses.insert(self.name.clone(), vec![compiler.out.len()-1]);
+                }
                 Ok(Void)
             }
         }
