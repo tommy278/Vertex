@@ -84,6 +84,7 @@ pub struct Compiler {
     pub function_types:HashMap<String,ComptimeValueType>,
     pub variables_type: HashMap<String, ComptimeValueType>,
     pub imports:Vec<String>,
+    pub function_call_addresses:HashMap<String,Vec<usize>>,
 }
 
 impl Default for Compiler {
@@ -104,6 +105,7 @@ impl Compiler {
             variables_type: HashMap::new(),
             function_types: HashMap::new(),
             imports: vec![],
+            function_call_addresses:HashMap::new(),
         }
     }
     pub fn optimize(instructions:Vec<Instructions>) -> Vec<Instructions> {
@@ -115,7 +117,19 @@ impl Compiler {
         }
         self.context.exit_scope();
     }
+    fn fix_function_jump_adresses(&mut self,fn_jmp_adresses:HashMap<String,usize>){
+        for (function,function_address) in fn_jmp_adresses {
+            for (function_call_name,address_of_call) in &self.function_call_addresses {
+                if *function_call_name == function {
+                    for jump_address in address_of_call {
+                        self.out[*jump_address] = Instructions::Jump(function_address)
+                    }
+                }                
+            } 
+        }
+    }
     pub fn add_function(&mut self)->Result<(),CompileError>{
+        let mut fn_jmp_addresses:HashMap<String,usize> = HashMap::new();
         self.out.push(Instructions::Jump(0));
         let jump_placeholder = self.out.len();
         let functions: Vec<_> = self.context.functions
@@ -151,6 +165,7 @@ impl Compiler {
             }
             self.out.push(Instructions::JumpOnLastOnStack);
             self.context.exit_function_scope();
+            fn_jmp_addresses.insert(name.clone(), length);
         }
         self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
         Ok(())

@@ -16,7 +16,7 @@ pub const JUMP_IF_TRUE:u8 = 42;
 pub const JUMP_LAST_ON_STACK:u8 = 43;
 
 // VALS
-pub const  PUSH_STR:u8 = 20;
+pub const PUSH_STR:u8 = 20;
 pub const PUSH_BOOL:u8 = 21;
 pub const PUSH_NUMB:u8 = 22;
 pub const PUSH_USIZE:u8=23;
@@ -105,7 +105,7 @@ impl Instructions {
             Instructions::JumpIfTrue(_) => JUMP_IF_TRUE,
             Instructions::JumpOnLastOnStack=>JUMP_LAST_ON_STACK,
             Instructions::Halt => HALT,
-            _ => unreachable!()
+            _ => std::process::exit(-95)
             
         }
     }
