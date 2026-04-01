@@ -81,8 +81,8 @@ pub struct Compiler {
     pub lookup: GlobalSymbols,
     pub function_types: HashMap<String, ComptimeValueType>,
     pub variables_type: HashMap<String, ComptimeValueType>,
-    pub imports:Vec<String>,
-    pub function_call_addresses:HashMap<String,Vec<usize>>,
+    pub imports: Vec<String>,
+    pub function_call_addresses: HashMap<String, Vec<usize>>,
 }
 
 impl Default for Compiler {
@@ -103,7 +103,7 @@ impl Compiler {
             variables_type: HashMap::new(),
             function_types: HashMap::new(),
             imports: vec![],
-            function_call_addresses:HashMap::new(),
+            function_call_addresses: HashMap::new(),
         }
     }
     pub fn optimize(instructions: Vec<Instructions>) -> Vec<Instructions> {
@@ -115,10 +115,7 @@ impl Compiler {
         }
         self.context.exit_scope();
     }
-    fn fix_function_jump_adresses(
-        &mut self,
-        fn_jmp_adresses: HashMap<String, usize>
-    ) {
+    fn fix_function_jump_adresses(&mut self, fn_jmp_adresses: HashMap<String, usize>) {
         for (function, function_address) in fn_jmp_adresses {
             if let Some(calls) = self.function_call_addresses.get(&function) {
                 for &addr in calls {
@@ -126,10 +123,9 @@ impl Compiler {
                 }
             }
         }
-
     }
-    pub fn add_function(&mut self)->Result<(),CompileError>{
-        let mut fn_jmp_addresses:HashMap<String,usize> = HashMap::new();
+    pub fn add_functions(&mut self) -> Result<(), CompileError> {
+        let mut fn_jmp_addresses: HashMap<String, usize> = HashMap::new();
         self.out.push(Instructions::Jump(0));
         let jump_placeholder = self.out.len();
         let functions: Vec<_> = self
@@ -138,8 +134,6 @@ impl Compiler {
             .iter()
             .map(|(name, function)| (name.clone(), function.clone()))
             .collect();
-        //NOTE:I know that this probably could be done fast becouse this is like O(F² * B) but i
-        //was to lazy to implemnt that :D
         for (name, function) in functions {
             let length = self.out.len();
             self.context.enter_function_scope();
@@ -162,7 +156,7 @@ impl Compiler {
             fn_jmp_addresses.insert(name.clone(), length);
         }
         self.fix_function_jump_adresses(fn_jmp_addresses);
-        self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
+        self.out[jump_placeholder - 1] = Instructions::Jump(self.out.len());
         Ok(())
     }
 }
@@ -437,7 +431,7 @@ impl Compilable for ProgramNode {
         for program_node in &mut self.program_nodes {
             program_node.compile(compiler)?;
         }
-        compiler.add_function()?;
+        compiler.add_functions()?;
         Ok(Void)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -585,7 +579,7 @@ impl Compilable for VariableDefineNode {
             return Ok(());
         } else {
             return Ok(()); // NOTE: We dont need to do anything here becouse we are just adding
-                           // type to alredy existing symbol or just creating variabl
+            // type to alredy existing symbol or just creating variabl
         }
     }
 
@@ -641,7 +635,7 @@ impl Compilable for VariableAccessNode {
                 (var.value_type.clone(), var.tag.clone())
             } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
                 let Some(val) = symbol.symbol_value_type.clone() else {
-                    return Err(CompileError::CannotInferType{
+                    return Err(CompileError::CannotInferType {
                         name: self.variable_name.clone(),
                     });
                 };
@@ -839,11 +833,12 @@ impl Compilable for FunctionCallNode {
                     .out
                     .push(Instructions::PushUsize(compiler.out.len() + 2));
                 compiler.out.push(Instructions::Call(self.name.clone()));
-                if let Some(a) = compiler.function_call_addresses.get_mut(&self.name){
-                    a.push(compiler.out.len()-1);
-                }
-                else {
-                    compiler.function_call_addresses.insert(self.name.clone(), vec![compiler.out.len()-1]);
+                if let Some(a) = compiler.function_call_addresses.get_mut(&self.name) {
+                    a.push(compiler.out.len() - 1);
+                } else {
+                    compiler
+                        .function_call_addresses
+                        .insert(self.name.clone(), vec![compiler.out.len() - 1]);
                 }
                 Ok(Void)
             }

@@ -15,7 +15,7 @@ use vertex::backend::{
 };
 use vertex::runtime::runner::running_vm::run_code;
 use std::env;
-use vertex::backend::saving_bytes::save::build_directory;
+use vertex::backend::saving_bytes::compile_tools::build_directory;
 
 fn main() {
     if let Err(e) = run_cli() {
