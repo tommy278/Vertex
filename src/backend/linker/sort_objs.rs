@@ -1,5 +1,4 @@
 use std::collections::{HashMap, VecDeque};
-
 use crate::backend::linker::obj_file::ObjFile;
 
 pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
@@ -17,14 +16,12 @@ pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
     
     for (name, obj) in &obj_map {
         for import in &obj.imports {
-
             if !obj_map.contains_key(import) {
                 return Err(format!(
                     "Module '{}' imports missing module '{}'",
                     name, import
                 ));
             }
-
             graph.entry(import.clone())
                 .or_default()
                 .push(name.clone());

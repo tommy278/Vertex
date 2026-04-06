@@ -100,6 +100,7 @@ fn run_cli() -> Result<(), CommandLineError> {
             Ok(())
         }
         "build-lib"=>{
+            eprint!("Building vertex libs is still unimplemented");
             Ok(())
 
         }

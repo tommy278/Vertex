@@ -103,7 +103,9 @@ impl BytecodeLoader {
         }
         Ok(instructions)
     }
-
+    /*
+     * Readers
+     */
     fn read_u8(&mut self) -> Result<u8, Box<dyn Error>> {
         if self.pos >= self.bytes.len() {
             return Err("Unexpected EOF reading u8".into());
@@ -134,7 +136,6 @@ impl BytecodeLoader {
         self.pos += 4;
         Ok(u32::from_le_bytes(bytes))
     }
-
 
     fn read_usize(&mut self) -> Result<usize, Box<dyn Error>> {
         if self.pos + 8 > self.bytes.len() {

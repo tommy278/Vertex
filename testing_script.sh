@@ -1,7 +1,6 @@
 #!/bin/sh
 
-
-sh -c "cargo clear && cargo build"
+sh -c "./build_skript.sh"
 CMD="target/debug/vertexC build testingCode/function_scope.flare scopes.out -d"
 
 while true
@@ -10,6 +9,7 @@ do
 
     sh -c "$CMD"
     EXIT_CODE=$?
+
 
     echo ""
     echo "Exit code: $EXIT_CODE"

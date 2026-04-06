@@ -938,7 +938,6 @@ impl Compilable for ImportNode {
         compiler.imports.push(self.module.clone());
         Ok(())
     }
-
     fn add_to_type_check(&self, _compiler: &mut Compiler) -> Result<(), CompileError> {
         Ok(())
     }
