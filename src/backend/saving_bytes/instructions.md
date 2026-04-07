@@ -1,4 +1,4 @@
-# Flare Bytecode Instructions Reference
+# Vertex Bytecode Instructions Reference
 
 ## Instruction Format
 
@@ -90,7 +90,7 @@ opcode
 ## Example Program
 
 ### Source Code
-```flare
+```Vertex
 if(true){
     writeLn!("hello")
 }

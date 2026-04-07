@@ -28,7 +28,7 @@ target = path.join("target", "release")
 if name == "nt": 
     vertexC = path.join(target, "vertexC.exe")
     vertex = path.join(target, "vertex.exe")
-    install_dir = r"C:\Program Files\flare"
+    install_dir = r"C:\Program Files\Vertex"
 else:
     vertexC = path.join(target, "vertexC")
     vertex = path.join(target, "vertex")

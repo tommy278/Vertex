@@ -1,8 +1,8 @@
-# Flare Virtual Machine Architecture
+# Vertex Virtual Machine Architecture
 
 ## Overview
 
-The Flare VM uses a **two-phase execution model**: bytecode is first parsed into structured instructions, then executed using instruction indices rather than byte positions.
+The Vertex VM uses a **two-phase execution model**: bytecode is first parsed into structured instructions, then executed using instruction indices rather than byte positions.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ The Flare VM uses a **two-phase execution model**: bytecode is first parsed into
 ┌─────────────────────────────────────────────────────────────┐
 │                    COMPILATION PHASE                        │
 ├─────────────────────────────────────────────────────────────┤
-│  Source Code (.flare)                                       │
+│  Source Code (.vtx)                                       │
 │       ↓                                                     │
 │  Lexer → Tokens                                             │
 │       ↓                                                     │
@@ -242,7 +242,7 @@ The `old_to_new` HashMap maps:
 ## Complete Flow Example
 
 ### Source Code
-```flare
+```Vertex
 if(true){
     writeLn!("hello")
 }

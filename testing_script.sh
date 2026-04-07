@@ -1,7 +1,7 @@
 #!/bin/sh
 
 sh -c "./build_skript.sh"
-CMD="target/debug/vertexC build testingCode/function_scope.flare scopes.out -d"
+CMD="target/debug/vertexC build testingCode/function_scope.vtx scopes.out -d"
 
 while true
 do

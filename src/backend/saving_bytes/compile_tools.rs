@@ -26,9 +26,6 @@ fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec
         println!("{:?}", instruction);
     }
 }
-//NOTE:This uses relative path from the compiler
-// so you need to cd in first, and then it run program main at the vertex
-
 ///This functions does compilation process of one single file. It creates tokens, build ast, create lookup for imported variables, updates types in type table, creates bytecode and optimizes it.
 /// # Returns
 /// Singular ObjFile
@@ -198,7 +195,7 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
         let entry = entry.expect("Cannot read entry");
         if entry.file_type().is_file() {
             if let Some(ext) = entry.path().extension() {
-                if ext == "flare" || ext == "vtx" {
+                if ext == "vtx" {
                     files.push(entry.path().to_string_lossy().to_string());
                 }
             }

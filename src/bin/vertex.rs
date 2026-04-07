@@ -75,7 +75,7 @@ fn run_cli() -> Result<(), CommandLineError> {
                     config
                         .write_all(format!("name = \"{}\"", &project_name).as_bytes())
                         .unwrap();
-                    let mut main_file = File::create(format!("{}/src/main.flare", &project_name))
+                    let mut main_file = File::create(format!("{}/src/main.vtx", &project_name))
                         .map_err(|_| CommandLineError::ErrorCreatingFile)?;
 
                     main_file
@@ -97,8 +97,8 @@ fn run_cli() -> Result<(), CommandLineError> {
                     Ok(c) => c,
                 };
 
-                File::open("src/main.flare").unwrap_or_else(|e| {
-                    print!("cannot find main.flare in ./src");
+                File::open("src/main.vtx").unwrap_or_else(|e| {
+                    print!("cannot find main.vtx in ./src");
                     process::exit(-1);
                 });
                 build_directory("src/".to_string(), config.name, debug)

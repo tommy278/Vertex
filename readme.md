@@ -37,19 +37,7 @@ Learn more in our [Getting Started Guide](docs/GETTING_STARTED.md).
 
 ## Building from Source
 
-**Prerequisites:**
-- Rust toolchain
-- Python 3+
-- Git
-
-```bash
-# Clone the repository
-git clone https://github.com/DomioKing653/Vertex.git
-cd Vertex
-
-# build the compiler
-python3 install.py
-```
+Follow the instructions at [installation guide](INSTALLATION.md)
 
 ## Documentation
 

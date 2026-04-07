@@ -13,12 +13,12 @@ For input, there's ```readInput!()``` macros. It takes one argument of type **pr
 **Example:**
 -
 
-```flare
+```Vertex
 const userName:string = readInput!("Whats your name?");
 writeLn!("Your name is",userName)
 ```
 ```bash
-$ vertexC exec input.flare input.out
+$ vertexC exec input.vtx input.out
 ```
 ```
 Whats your name?simon
@@ -32,7 +32,7 @@ For output, there are ```writeLn!()```/```write!()``` macros that takes any amou
 **Example:**
 -
 
-```flare
+```Vertex
 write!("Hello ","world!") // Hello world
 writeLn!("Hello ","world!") // Hello
                             // world!
@@ -46,7 +46,7 @@ For this, there is ```processExit!()``` macros that take one **numb** argument a
 
 **Example**
 -
-```flare
+```Vertex
 const x:numb=5;
 if(x>7){
   processExit!(195)
@@ -56,7 +56,7 @@ else{
 }
 ```
 ```bash
-$ vertexC exec process.flare process.out
+$ vertexC exec process.vtx process.out
 ```
 ```
 Exited with code `5`

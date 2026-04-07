@@ -1,0 +1,6 @@
+
+; this file will be used to capy VM to for compilation with NASM
+
+
+
+db 0xff ;halt  
