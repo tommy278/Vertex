@@ -4,4 +4,5 @@ pub mod lexer_errors;
 pub mod parser_errors;
 pub mod runtime_error;
 pub mod linker;
-pub mod colorformat;
+pub mod formatter;
+pub mod diagnostics;

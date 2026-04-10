@@ -205,7 +205,7 @@ macro_rules! clrprintln {
         println!("{}", crate::backend::errors::format_color($s).unwrap());
     };
     ($fmt:expr, $($arg:tt)*) => {
-        println!("{}", crate::backend::errors::colorformat::format_color(&format!($fmt, $($arg)*)).unwrap());
+        println!("{}", crate::backend::errors::formatter::colorformat::format_color(&format!($fmt, $($arg)*)).unwrap());
     };
 }
 

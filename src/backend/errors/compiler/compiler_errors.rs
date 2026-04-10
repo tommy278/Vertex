@@ -2,9 +2,10 @@
 use crate::backend::compiler::comptime_variable_checker::comptime_value_for_check::ComptimeValueType;
 use thiserror::Error;
 
-
+// let x = Err(CompileError.UndefinedVariable(x));
 #[derive(Debug, Error, Clone)]
 pub enum CompileError {
+
     #[error("[E0001]Unknown macro: {name}")]
     UnknownMacro { name: String },
 

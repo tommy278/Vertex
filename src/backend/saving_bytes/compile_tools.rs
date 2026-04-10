@@ -193,24 +193,17 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
 
     let tmp_launcher_path = "tmp_launcher.rs";
     fs::write(tmp_launcher_path, temp_launcher).unwrap();
-
-    let runtime_path = "libvm_runtime.a";
-    if !Path::new(runtime_path).exists() {
-        eprintln!("Runtime .a file not found at {}", runtime_path);
-        process::exit(-5);
-    }
-
+    let runtime_path = find_libvm_runtime(Path::new(".")).unwrap();
     let status = Command::new("rustc")
         .args(&[
             tmp_launcher_path,
-            "-L", Path::new(runtime_path).parent().unwrap().to_str().unwrap(),
+            "-L", Path::new(&runtime_path).parent().unwrap().to_str().unwrap(),
             "-l", "static=vm_runtime",
             "-O",
             "-o", &out,
         ])
         .status()
         .expect("Failed to run rustc");
-
     if !status.success() {
         panic!("rustc failed");
     }
@@ -220,7 +213,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
         "\x1b[32mFinished writing\x1b[0m in {:.4}s\n",
         write_start.elapsed().as_secs_f32()
     );
-
+    fs::remove_file(tmp_launcher_path).unwrap();
     /*
      * TOTAL TIME
      */
@@ -253,4 +246,30 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
     }
 
     files
+}
+fn find_libvm_runtime(start: &Path) -> Option<String> {
+    if !start.is_dir() {
+        return None;
+    }
+
+    let entries = fs::read_dir(start).ok()?;
+
+    for entry in entries {
+        let entry = entry.ok()?;
+        let path = entry.path();
+
+        if path.is_file() {
+            if let Some(name) = path.file_name() {
+                if name == "libvm_runtime.a" {
+                    return Some(path.to_str().unwrap().to_string());
+                }
+            }
+        } else if path.is_dir() {
+            if let Some(found) = find_libvm_runtime(&path) {
+                return Some(found);
+            }
+        }
+    }
+
+    None
 }

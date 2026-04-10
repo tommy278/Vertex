@@ -257,6 +257,7 @@ impl Lexer {
 
         self.advance();
         Ok(Token {
+
             token_kind: TokenKind::STRING,
             token_value: value,
         })

@@ -1,5 +1,4 @@
-// NOTE:
-// This is the main Vertex compiler CLI used until `vertex` is ready for production.
+// NOTE:This is the main Vertex compiler CLI used until `vertex` is ready for production.
 // It is intended to compile a single file without external dependencies.
 // Currently, it does not have a working linker.
 // Once `vertex` is ready, this tool will likely be replaced or deprecated and not be ready for
@@ -38,7 +37,7 @@ fn run_cli() -> Result<(), CommandLineError> {
 
     match args[1].as_str() {
         "build" => {
-            let (debug, source, output) = parse_build_args(&args[2..])?;
+            let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
             build_directory(source, output, debug);
             Ok(())
         }
@@ -50,7 +49,7 @@ fn run_cli() -> Result<(), CommandLineError> {
             Ok(())
         }
         "exec" => {
-            let (debug, source, output) = parse_build_args(&args[2..])?;
+            let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
             build_directory(source.clone(), output.clone(), debug);
             run_code(&format!("out/{}", &output));
             Ok(())
@@ -107,10 +106,12 @@ fn run_cli() -> Result<(), CommandLineError> {
     }
 }
 
-fn parse_build_args(args: &[String]) -> Result<(bool, String, String), CommandLineError> {
+fn parse_build_args(args: &[String]) -> Result<(bool, String, String,String), CommandLineError> {
     let mut debug = false;
     let mut source = String::new();
     let mut output = String::new();
+    let mut path_to_vm = String::new();
+
     let mut i = 0;
 
     while i < args.len() {
@@ -124,7 +125,11 @@ fn parse_build_args(args: &[String]) -> Result<(bool, String, String), CommandLi
                     source = args[i].clone();
                 } else if output.is_empty() {
                     output = args[i].clone();
-                } else {
+                }
+                else if output.is_empty() {
+                    path_to_vm = args[i].clone();
+                } 
+                else {
                     return Err(BuildHasJustTwoArg);
                 }
                 i += 1;
@@ -136,5 +141,5 @@ fn parse_build_args(args: &[String]) -> Result<(bool, String, String), CommandLi
         return Err(BuildHasJustTwoArg);
     }
 
-    Ok((debug, source, output))
+    Ok((debug, source, output,path_to_vm))
 }
