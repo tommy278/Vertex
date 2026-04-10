@@ -2,8 +2,7 @@
 // It is intended to compile a single file without external dependencies.
 // Currently, it does not have a working linker. Once `vertex` is ready, this tool will likely be replaced or deprecated and not be ready for
 // production.
-use
-std::env;
+use std::env;
 use vertex::backend::saving_bytes::compile_tools::build_directory;
 use vertex::backend::{
     errors::cli_errors::CommandLineError::{
@@ -69,28 +68,29 @@ fn run_cli() -> Result<(), CommandLineError> {
             Ok(())
         }
         "help" => {
-            println!(
-                r#"vertexC — compiler tool for Vertex
+            vertex::clrprintln!(
+                r#"
+            vertexC — compiler tool for Vertex
 
             vertexC compiles a single source file into Vertex bytecode.
-            It will remain available even after the 'vertex' project manager
-            is finished, mainly for testing and low-level workflows.
+            It will remain available even after the 'vertex' project 
+            manager is finished, mainly for testing and low-level workflows.
 
-            USAGE:
-                vertexC build <INPUT_FILE> <OUTPUT_FILE>
+            $green|USAGE:$reset|
+                vertexC build $cyan|<INPUT_FILE> <OUTPUT_FILE>$reset|
                     Compile source file into bytecode stored in ./out/
                     flags:
                         -d:show final instructions
 
-                vertexC run <BYTECODE>
+                vertexC run $cyan|<BYTECODE>$reset|
                     Execute bytecode using VVM (Vertex Virtual Machine)
 
-                vertexC exec <INPUT_FILE> <OUTPUT_FILE>
+                vertexC exec $cyan|<INPUT_FILE> <OUTPUT_FILE>$reset|
                     Compile and immediately run the produced bytecode
                     flags:
                         -d:show final instructions
 
-                vertexC error <ERORR_CODE>
+                vertexC error $cyan|<ERORR_CODE>$reset|
                     Explains erorr more deeply
             "#
             );

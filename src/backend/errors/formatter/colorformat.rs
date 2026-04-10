@@ -21,7 +21,6 @@ Validation and errors:
 
 CREATOR: Lightmayo (Alias) — refactored.
 */
-
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -172,9 +171,18 @@ fn parse_tag(tag: &str) -> Result<Control, ColorError> {
         .ok_or_else(|| ColorError::UnknownBuiltin(tag.into()))
 }
 
+#[macro_export]
+macro_rules! clrprintln {
+    ($s:expr) => {
+        println!("{}", $crate::backend::errors::formatter::colorformat::format_color($s).unwrap());
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        println!("{}", $crate::backend::errors::formatter::colorformat::format_color(&format!($fmt, $($arg)*)).unwrap());
+    };
+}
 fn builtin(name: &str) -> Option<Color> {
     match name {
-        "red" => Some(Color::rgb(255, 0, 0)),
+        "red" => Some(Color::rgb(239, 68, 68)),
         "green" => Some(Color::rgb(0, 255, 0)),
         "sgreen" => Some(Color::rgb(128, 255, 128)),
         "blue" => Some(Color::rgb(0, 0, 255)),
@@ -198,17 +206,6 @@ fn parse_u8(s: &str) -> Result<u8, ColorError> {
     }
     Ok(n as u8)
 }
-
-#[macro_export]
-macro_rules! clrprintln {
-    ($s:expr) => {
-        println!("{}", crate::backend::errors::format_color($s).unwrap());
-    };
-    ($fmt:expr, $($arg:tt)*) => {
-        println!("{}", crate::backend::errors::formatter::colorformat::format_color(&format!($fmt, $($arg)*)).unwrap());
-    };
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

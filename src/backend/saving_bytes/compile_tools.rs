@@ -171,14 +171,21 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
 
     compile_instr_to_bytes(out_path, &mut final_file).expect("Cannot load binary file");
 
+    println!(
+        "\x1b[32mFinished writing\x1b[0m in {:.4}s\n",
+        write_start.elapsed().as_secs_f32()
+    );
+
+
     /*
      * Compiling to exe
      */
+    println!("\x1b[1mCompiling with rustc\x1b[0m");
+    let compiler_timer = Instant::now();
     let bytecode_path = format!("out/{}",out);
     let temp_launcher = format!(
         r#"
         static BYTECODE: &[u8] = include_bytes!(r"{bytecode_path}");
-
         fn main() {{
             extern "C" {{
                 fn vm_entry(ptr: *const u8, len: usize);
@@ -207,13 +214,10 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     if !status.success() {
         panic!("rustc failed");
     }
-
-
-    println!(
-        "\x1b[32mFinished writing\x1b[0m in {:.4}s\n",
-        write_start.elapsed().as_secs_f32()
-    );
     fs::remove_file(tmp_launcher_path).unwrap();
+    clrprintln!("$green|");
+
+
     /*
      * TOTAL TIME
      */
