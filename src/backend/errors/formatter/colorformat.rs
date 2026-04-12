@@ -181,6 +181,15 @@ macro_rules! clrprintln {
     };
 }
 
+#[macro_export]
+macro_rules! clrprint {
+    ($s:expr) => {
+        print!("{}", $crate::backend::errors::formatter::colorformat::format_color($s).unwrap());
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        print!("{}", $crate::backend::errors::formatter::colorformat::format_color(&format!($fmt, $($arg)*)).unwrap());
+    };
+}
 fn builtin(name: &str) -> Option<Color> {
     match name {
         "red" => Some(Color::rgb(239, 68, 68)),

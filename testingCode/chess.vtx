@@ -7,7 +7,8 @@ fnc printunderscores(count:int):void{
 	}
 	writeLn!("");
 }
-const size:int = 10;
+
+const size:int = 10.;
 printunderscores(size);
 var it:int = 0;
 while (it < size)

@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use crate::backend::lexer::tokens::TokenKind::{COMMA, FALSE, SEMICOLON, TRUE};
 use crate::{
     backend::errors::lexer_errors::LexerErrorKind,
@@ -41,9 +39,9 @@ impl Lexer {
             
         }
     }
-    pub fn tokenize(&mut self) -> Result<&Vec<Token>, Box<dyn Error>> {
+    pub fn tokenize(&mut self) -> Result<&Vec<Token>, LexerError> {
         if self.source_text.is_empty() {
-            return Err(LexerErrorKind::EmptyFile.into());
+            return Err(LexerError{err: LexerErrorKind::EmptyFile.into(),line:0,char:0});
         }
         self.current_char = self.source_text[0];
         while self.current_char != '\0' {

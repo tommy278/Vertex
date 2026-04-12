@@ -1,10 +1,8 @@
 use crate::backend::{
-    ast::parser::Parser,
-    compiler::{
+    ast::parser::Parser, compiler::{
         byte_code::{Compilable, Compiler},
         instructions::Instructions,
-    },
-    lexer::{lexer::Lexer, tokens::Token},
+    }, errors::diagnostics::diagnostics::print_lexer_err, lexer::{lexer::Lexer, tokens::Token}
 };
 use crate::backend::linker::link::Linker;
 use crate::clrprintln;
@@ -49,7 +47,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     let tokens: &Vec<Token> = match main_lexer.tokenize() {
         Err(e) => {
             clrprintln!("$red|Error at {}:", &dir);
-            println!("{}", e);
+            print_lexer_err(e,fs::read_to_string(&dir).unwrap()); 
             process::exit(-1);
         }
         Ok(tokens) => tokens,
