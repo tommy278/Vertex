@@ -101,7 +101,7 @@ fn run_cli() -> Result<(), CommandLineError> {
                     clrprintln!("$red|Linker error -> Cannot find main.vtx in ./src");
                     process::exit(-1);
                 });
-                build_directory("src/".to_string(), config.name, debug)
+                build_directory("src/".to_string(), config.name, debug,None)
             }
             "clear" => remove_dir_all("./out").unwrap(),
             _ => return Err(CommandLineError::NoSuchCommand),

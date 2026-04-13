@@ -10,7 +10,7 @@ use crate::backend::linker::obj_file::ObjFile;
 use crate::backend::saving_bytes::save::compile_instr_to_bytes;
 use std::{
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     process,
     time::Instant,
 };
@@ -100,7 +100,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
 
 //NOTE:This is just entry point for the compilation process, and it
 //shouldn't be used any further in the compilation process
-pub fn build_directory(dir: String, out: String, debug: bool) {
+pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<PathBuf>) {
     ensure_target_dir();
 
     let total_start = Instant::now();

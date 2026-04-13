@@ -3,6 +3,7 @@
 // Currently, it does not have a working linker. Once `vertex` is ready, this tool will likely be replaced or deprecated and not be ready for
 // production.
 use std::env;
+use std::path::PathBuf;
 use vertex::backend::saving_bytes::compile_tools::build_directory;
 use vertex::backend::{
     errors::cli_errors::CommandLineError::{
@@ -36,7 +37,7 @@ fn run_cli() -> Result<(), CommandLineError> {
     match args[1].as_str() {
         "build" => {
             let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
-            build_directory(source, output, debug);
+            build_directory(source, output, debug,Some(PathBuf::from(path_to_vm)));
             Ok(())
         }
         "run" => {
@@ -48,7 +49,7 @@ fn run_cli() -> Result<(), CommandLineError> {
         }
         "exec" => {
             let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
-            build_directory(source.clone(), output.clone(), debug);
+            build_directory(source.clone(), output.clone(), debug,Some(PathBuf::from(path_to_vm)));
             run_code(&format!("out/{}", &output));
             Ok(())
         }
