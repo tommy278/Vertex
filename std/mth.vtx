@@ -1,5 +1,5 @@
-var pi:flt = 3.14159265359;
-var e:flt = 2.71828182846;
+const pi:flt = 3.14159265359;
+const e:flt = 2.71828182846;
 
 fnc average_of_3(first:flt,second:flt,third:flt):void{
     flt i = first + second + third;

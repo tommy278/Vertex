@@ -103,10 +103,14 @@ impl Lexer {
                     token_kind: TIMES,
                     token_value: self.current_char.to_string(),
                 }),
-                '/' => self.final_tokens.push(Token {
+                '/' =>{
+                    //FIXME:Add comments synatx
+                    self.final_tokens.push(Token {
                     token_kind: DIVIDE,
                     token_value: self.current_char.to_string(),
-                }),
+                })
+
+                },
                 '%' => self.final_tokens.push(Token {
                     token_kind: MODULO,
                     token_value: self.current_char.to_string(),
