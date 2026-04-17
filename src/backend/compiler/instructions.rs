@@ -71,7 +71,6 @@ pub enum Instructions {
     // Halt
     Halt,
 }
-
 impl Instructions {
     pub fn opcode(&self) -> u8 {
         match self {

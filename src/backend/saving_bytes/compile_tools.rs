@@ -2,7 +2,7 @@ use crate::backend::{
     ast::parser::Parser, compiler::{
         byte_code::{Compilable, Compiler},
         instructions::Instructions,
-    }, errors::diagnostics::diagnostics::print_lexer_err, lexer::{lexer::Lexer, tokens::Token}
+    }, errors::diagnostics::diagnostics::print_lexer_err, lexer::{lexer::Lexer, tokens::Token}, saving_bytes::binary_compilation
 };
 use crate::backend::linker::link::Linker;
 use crate::clrprintln;
@@ -21,7 +21,6 @@ fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec
         println!("{:?}", instruction);
     }
 }
-use process::Command;
 ///This functions does compilation process of one single file. It creates tokens, build ast, create lookup for imported variables, updates types in type table, creates bytecode and optimizes it.
 /// # Returns
 /// Singular ObjFile
@@ -172,53 +171,7 @@ pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<Pat
         write_start.elapsed().as_secs_f32()
     );
 
-
-    /*
-     * Compiling to exe
-     */
-    //NOTE:You need to have zig toolchain installed to compile this. We are creating temp_launcher
-    //and than compiling it with:
-    //`zig build-exe tmp_launcher_path.zig runtime_path -lc -lunwind -Doptimize=ReleaseSmall
-    //femit-bin=out/bin/out`
-    println!("\x1b[1mCompiling with zig\x1b[0m");
-    let compiler_timer = Instant::now();
-    let bytecode_path = format!("out/{}",out);
-    let temp_launcher = format!(
-        r#"
-const std = @import("std");
-extern fn vm_entry(ptr: [*]const u8, len: usize) void;
-var program = @embedfile("{bytecode_path}");
-pub fn main() !void {{
-    vm_entry(program.ptr, program.len);
-}}
-        "#,
-        bytecode_path = bytecode_path    
-    );
-
-    let tmp_launcher_path = "tmp_launcher.zig";
-    fs::write(tmp_launcher_path, temp_launcher).unwrap();
-
-   
-
-    let runtime_path = find_libvm_runtime(Path::new(".")).unwrap();
-    
-    let status = Command::new("zig")
-        .args(&[
-            "build-exe",
-            "tmp_launcher.zig",
-            &runtime_path,
-            "-lc",
-            "-lunwind",
-            "-Doptimize=ReleaseSmall",
-            &format!("-femit-bin=out/bin/{}",out),
-        ])
-        .status()
-        .expect("Failed to run zig");
-    if !status.success() {
-        panic!("zig failed");
-    }
-    fs::remove_file(tmp_launcher_path).unwrap();
-    clrprintln!("$green|");
+    binary_compilation::compile_to_binary(&out);
 
 
     /*
@@ -256,43 +209,4 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
     files
 }
 
-fn find_libvm_runtime(start: &Path) -> Option<String> {
-    let mut current: Option<&Path> = Some(start);
 
-    while let Some(dir) = current {
-        if let Some(found) = find_in_dir_recursive(dir) {
-            return Some(found);
-        }
-
-        current = dir.parent();
-    }
-
-    None
-}
-
-fn find_in_dir_recursive(start: &Path) -> Option<String> {
-    if !start.is_dir() {
-        return None;
-    }
-
-    let entries = fs::read_dir(start).ok()?;
-
-    for entry in entries {
-        let entry = entry.ok()?;
-        let path = entry.path();
-
-        if path.is_file() {
-            if let Some(name) = path.file_name() {
-                if name == "libvm_runtime.a" {
-                    return Some(path.to_string_lossy().to_string());
-                }
-            }
-        } else if path.is_dir() {
-            if let Some(found) = find_in_dir_recursive(&path) {
-                return Some(found);
-            }
-        }
-    }
-
-    None
-}
