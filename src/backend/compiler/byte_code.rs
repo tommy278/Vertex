@@ -1,5 +1,5 @@
 use crate::backend::ast::nodes::CallType::Macro;
-use crate::backend::ast::nodes::ReturnNode;
+use crate::backend::ast::nodes::{LoopNode, ReturnNode};
 use crate::backend::compiler::instructions::Instructions::Drop;
 use crate::backend::errors::compiler::compiler_errors::CompileError::UndefinedVariable;
 use crate::backend::linker::link::SymbolType::Variable;
@@ -872,8 +872,6 @@ impl Compilable for FunctionCallNode {
         } else {
             let my_type =compiler.context.get_fn(&self.name)?.return_type;
             Ok(my_type)
-
-
         }
     }
 }
@@ -958,4 +956,28 @@ impl Compilable for ImportNode {
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
     }
+}
+impl Compilable for LoopNode {
+    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+        todo!()
+    }
+    fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+        Ok(())
+    }
+    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+       Ok(()) 
+    }
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        let start_adress = compiler.out.len();
+        for node in &mut self.body  {
+            node.compile(compiler)?;
+        }
+        compiler.out.push(Instructions::Jump(start_adress));
+        Ok(Void)
+    }
+    fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
+    }
+
+    
 }

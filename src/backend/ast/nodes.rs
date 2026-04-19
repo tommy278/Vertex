@@ -212,3 +212,14 @@ impl Debug for ReturnNode {
        self.fmt_with_indent(f,0)
    } 
 }
+
+
+#[derive(Clone)]
+pub struct LoopNode{
+    pub body:Vec<Box<dyn Compilable>>
+}
+impl Debug for LoopNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.fmt_with_indent(f,0)
+    }
+}

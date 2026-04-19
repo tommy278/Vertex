@@ -33,3 +33,4 @@ while (it < size)
 	writeLn!("|");
 }
 printunderscores(size);
+writeLn!(tile);

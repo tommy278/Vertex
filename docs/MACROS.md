@@ -4,7 +4,7 @@ Macros are build-in functions hard coded to the language it self. You can tell t
 
 ---
 
-## Output and  input macros
+## Output and input macros
 ### Input
 For input, there's ```readInput!()``` macros. It takes one argument of type **printable**. Then it print out the argument without \n. Then it reads input from console  and returns it as a **string**
 

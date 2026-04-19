@@ -13,17 +13,16 @@ pub fn compile_to_binary(out:&str) {
     let compiler_timer = Instant::now();
     let bytecode_path = format!("out/{}",out);
     let temp_launcher = format!(
-        r#"
+r#"
 const std = @import("std");
 extern fn vm_entry(ptr: [*]const u8, len: usize) void;
 var program = @embedFile("{bytecode_path}");
 pub fn main() !void {{
     vm_entry(program.ptr, program.len);
 }}
-        "#,
+"#,
         bytecode_path = bytecode_path    
     );
-
     let tmp_launcher_path = "tmp_launcher.zig";
     fs::write(tmp_launcher_path, temp_launcher).unwrap();
     let runtime_path = find_libvm_runtime(Path::new(".")).unwrap();

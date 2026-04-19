@@ -9,11 +9,11 @@ use std::collections::HashMap;
 use crate::backend::ast::statements::structs::ComptimeStructForCheck;
 
 pub struct CompileContext {
-    pub variables: HashMap<String, ComptimeVariable>,
+    variables: HashMap<String, ComptimeVariable>,
     pub functions: HashMap<String, CompileTimeFunctionForCheck>,
     pub scopes: Vec<HashMap<String, ComptimeVariable>>,
     pub structs: Vec<HashMap<String, ComptimeStructForCheck>>,
-    pub types: Vec<String>,
+    types: Vec<String>,
     pub function_depth: usize,
     pub curren_return_type: ComptimeValueType,
     is_in_function_contex: bool,
@@ -32,11 +32,8 @@ impl CompileContext {
             is_in_function_contex: false,
             last_fn_context: 0,
             function_depth: 0,
-            
         }
     }
-
-    // ================= TYPES =================
 
     pub fn add_type(&mut self, type_to_add: String) -> Result<(), CompileError> {
         if !self.types.contains(&type_to_add) {
@@ -107,6 +104,7 @@ impl CompileContext {
     }
 
     pub fn get_variable(&self, name: &str) -> Option<&ComptimeVariable> {
+        // NOTE:This is how will compiler search variables:
         if self.is_in_function_contex {
             for scope in self.scopes[self.last_fn_context..].iter().rev() {
                 if let Some(v) = scope.get(name) {
@@ -116,12 +114,14 @@ impl CompileContext {
 
             return self.scopes[0].get(name);
         }
-
-        for scope in self.scopes.iter().rev() {
-            if let Some(v) = scope.get(name) {
-                return Some(v);
+        else {
+            for scope in self.scopes.iter().rev() {
+                if let Some(v) = scope.get(name) {
+                    return Some(v);
+                }
             }
         }
+
 
         None
     }

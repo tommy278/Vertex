@@ -1,5 +1,11 @@
+
 # This is roadmap for Vertex PL
 If you find something missing or finished just add or fix etc.
+## MAIN GOALS
+1. More robust variable and type system [_]
+2. Better error rendering for parser and compiler [_]
+3. Better docs [_]
+4. Better linker [_]
 ## Lexer
 - Make working lexer [_]
   1. Keywords [x]
@@ -9,11 +15,11 @@ If you find something missing or finished just add or fix etc.
     * +/- [x]
     * * / [x]
     * && / || [_]
-- Make better formatted error handeling [_]
-  1. Unknown char [_]
-  2. Cannot parse empty file [_]
-  3. Underminated string [_]
-  4. More dots in a number [_]
+- Make better formatted error handeling [x]
+  1. Unknown char [x]
+  2. Cannot parse empty file [x]
+  3. Underminated string [x]
+  4. More dots in a number [x]
 ## Parser
 - Make better erros [_]
   1. Expected type [_]

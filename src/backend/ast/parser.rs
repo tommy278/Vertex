@@ -1,7 +1,7 @@
 use crate::backend::{
     ast::{
         nodes::{
-            BinaryOpNode, BoolNode, CallType::{Fn, Macro}, FloatNode, FunctionCallNode, ImportNode, NumberNode, ProgramNode, ReturnNode, StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode
+            BinaryOpNode, BoolNode, CallType::{Fn, Macro}, FloatNode, FunctionCallNode, ImportNode, LoopNode, NumberNode, ProgramNode, ReturnNode, StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode
         },
         statements::{
             if_statement::IfStatement,
@@ -78,6 +78,25 @@ impl Parser {
     //just on top of the program for now
     fn parse_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         match &self.current_token().token_kind {
+            TokenKind::LOOP=>{
+                self.advance();
+                self.expect(OPENINGBRACE)?;
+                let mut body: Vec<Box<dyn Compilable>> = Vec::new();
+                while self.current_token().token_kind != CLOSINGBRACE {
+                    if self.current_token().token_kind == EOF {
+                        return Err(ParserError::UnexpectedToken {
+                            found: "EOF".into(),
+                            expected: SEMICOLON,
+                        });
+                    }
+                    body.push(self.parse_stmt()?);
+                }
+                self.expect(CLOSINGBRACE)?;
+                Ok(Box::new(LoopNode{
+                    body
+                }))
+
+            }
             TokenKind::RETURN=>{
                 self.advance();
                 if self.current_token().token_kind == SEMICOLON{
