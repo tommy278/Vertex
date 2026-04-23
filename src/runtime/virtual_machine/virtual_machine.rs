@@ -249,6 +249,9 @@ impl VM {
                     }
                     break;
                 }
+                _=>{
+                    unreachable!()
+                }
             }
         }
         Ok(())

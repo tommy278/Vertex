@@ -1,5 +1,6 @@
 # Vertex
 
+![Alt text](./docs/img/Vertex-logo.png)
 A modern, statically-typed programming language designed for clarity, performance, and compile-time safety.
 
 ## Key Features
